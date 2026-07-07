@@ -77,10 +77,12 @@ export const useStore = create<AppState>((set, get) => ({
     maxDotScale: 1,
   },
   relief: {
+    variant: "height",
     minScale: 0.35,
     maxScale: 1,
     shadowBlur: 12,
     shadowOffset: 6,
+    heightScale: 0.6,
   },
   color: {
     mode: "full-color",

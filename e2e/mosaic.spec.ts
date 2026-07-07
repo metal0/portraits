@@ -156,6 +156,22 @@ test("dithering changes the pixel layout", async ({ page }) => {
     .not.toBe(flat.variance);
 });
 
+test("relief mode renders all variants", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+
+  await page.getByRole("tab", { name: "Relief" }).click();
+  await expect
+    .poll(async () => (await canvasStats(page)).variance, { timeout: 5000 })
+    .toBeGreaterThan(20);
+  const raised = await canvasStats(page);
+
+  await page.getByRole("tab", { name: "Iso" }).click();
+  await expect
+    .poll(async () => (await canvasStats(page)).distinct)
+    .not.toBe(raised.distinct);
+});
+
 test("exports a PNG download", async ({ page }) => {
   await page.goto("/");
   await upload(page);

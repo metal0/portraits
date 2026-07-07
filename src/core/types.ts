@@ -55,11 +55,16 @@ export interface DotOptions {
   maxDotScale: number;
 }
 
+export type ReliefVariant = "size" | "height" | "iso";
+
 export interface ReliefOptions {
+  variant: ReliefVariant;
   minScale: number;
   maxScale: number;
   shadowBlur: number;
   shadowOffset: number;
+  /** 0..1 extrusion amount for height + iso variants. */
+  heightScale: number;
 }
 
 export interface ColorSettings {

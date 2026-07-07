@@ -1,7 +1,7 @@
 import { useStore } from "@/state/store";
 import { Section, Segmented, SliderField, Toggle, ColorField } from "./ui/Controls";
 import { Icon } from "./ui/Icon";
-import type { DotShape, RenderMode } from "@/core/types";
+import type { DotShape, RenderMode, ReliefVariant } from "@/core/types";
 
 export function StyleControls() {
   const renderMode = useStore((s) => s.renderMode);
@@ -10,6 +10,8 @@ export function StyleControls() {
   const setSquare = useStore((s) => s.setSquare);
   const dot = useStore((s) => s.dot);
   const setDot = useStore((s) => s.setDot);
+  const relief = useStore((s) => s.relief);
+  const setRelief = useStore((s) => s.setRelief);
 
   return (
     <Section icon="sliders" title="Style">
@@ -19,6 +21,7 @@ export function StyleControls() {
         options={[
           { value: "square", label: <Icon name="square" size={16} />, title: "Square" },
           { value: "dot", label: <Icon name="circle" size={16} />, title: "Dot" },
+          { value: "relief", label: <Icon name="cube" size={16} />, title: "Relief" },
         ]}
       />
 
@@ -87,6 +90,79 @@ export function StyleControls() {
             checked={dot.invert}
             onChange={(invert) => setDot({ invert })}
           />
+        </>
+      )}
+
+      {renderMode === "relief" && (
+        <>
+          <Segmented<ReliefVariant>
+            value={relief.variant}
+            onChange={(variant) => setRelief({ variant })}
+            options={[
+              { value: "height", label: "Raised" },
+              { value: "size", label: "Size" },
+              { value: "iso", label: "Iso" },
+            ]}
+          />
+
+          {relief.variant === "size" && (
+            <>
+              <SliderField
+                label="Min size"
+                value={Number(relief.minScale.toFixed(2))}
+                min={0.1}
+                max={1}
+                step={0.05}
+                onChange={(minScale) => setRelief({ minScale })}
+              />
+              <SliderField
+                label="Max size"
+                value={Number(relief.maxScale.toFixed(2))}
+                min={0.5}
+                max={1.4}
+                step={0.05}
+                onChange={(maxScale) => setRelief({ maxScale })}
+              />
+              <SliderField
+                label="Shadow"
+                value={relief.shadowBlur}
+                min={0}
+                max={40}
+                onChange={(shadowBlur) => setRelief({ shadowBlur })}
+              />
+            </>
+          )}
+
+          {relief.variant === "height" && (
+            <>
+              <SliderField
+                label="Height"
+                value={Number(relief.heightScale.toFixed(2))}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(heightScale) => setRelief({ heightScale })}
+              />
+              <SliderField
+                label="Shadow"
+                value={relief.shadowBlur}
+                min={0}
+                max={40}
+                onChange={(shadowBlur) => setRelief({ shadowBlur })}
+              />
+            </>
+          )}
+
+          {relief.variant === "iso" && (
+            <SliderField
+              label="Height"
+              value={Number(relief.heightScale.toFixed(2))}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(heightScale) => setRelief({ heightScale })}
+            />
+          )}
         </>
       )}
     </Section>

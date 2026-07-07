@@ -5,6 +5,7 @@ import { applyAdjustments } from "../adjust";
 import { applyColor } from "../colorize";
 import { renderSquare } from "./square";
 import { renderDot } from "./dot";
+import { renderRelief } from "./relief";
 
 /**
  * Render one complete portrait frame into `ctx`. The context's canvas is
@@ -32,6 +33,8 @@ export function renderPortrait(ctx: Ctx2D, source: ImageBitmap, req: RenderReque
 
   if (req.renderMode === "dot") {
     renderDot(ctx, sample, req);
+  } else if (req.renderMode === "relief") {
+    renderRelief(ctx, sample, req);
   } else {
     renderSquare(ctx, sample, req);
   }
