@@ -654,32 +654,61 @@ input[type="range"] {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- Bordered frame with a legend on the border ---- */
+.frame {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  padding: calc(var(--space-4) + 2px) var(--space-4) var(--space-4);
+}
+.frame__legend {
+  position: absolute;
+  top: 0;
+  left: var(--space-3);
+  transform: translateY(-50%);
+  padding: 2px var(--space-2);
+  background: var(--bg-panel);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  border-radius: 4px;
+}
+.frame__legend--right {
+  left: auto;
+  right: var(--space-3);
+  padding: 0;
+  background: var(--bg-panel);
+}
+.frame__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  background: var(--bg-panel);
+  color: var(--text-dim);
+  text-transform: none;
+  letter-spacing: 0;
+  border-radius: 4px;
+}
+.frame__action:hover {
+  color: var(--text);
+}
+.frame--preview {
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+}
+
 /* ---- Original vs Mosaic comparison ---- */
 .compare {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  gap: var(--space-5);
 }
-.compare__row {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-3);
-}
-.compare__tag {
-  width: 58px;
-  flex: none;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
-  padding-bottom: 18px;
-}
-.compare__cells {
+.frame__body {
   display: flex;
   align-items: flex-end;
   gap: var(--space-4);
@@ -699,9 +728,6 @@ input[type="range"] {
 .compare__size {
   font-size: 10px;
   color: var(--text-faint);
-}
-.compare__toggle {
-  align-self: flex-start;
 }
 
 /* ---- Mobile ---- */

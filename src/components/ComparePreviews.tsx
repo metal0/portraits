@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
 import { computeSquareSourceRect } from "@/core/sampling";
@@ -19,34 +19,46 @@ export function ComparePreviews() {
 
   return (
     <div className="compare">
-      <div className="compare__row">
-        <span className="compare__tag">Original</span>
-        <div className="compare__cells">
-          {SIZES.map((size) => (
-            <OriginalCell key={size} size={size} source={source} crop={crop} />
-          ))}
-        </div>
-      </div>
+      <Frame label="Original">
+        {SIZES.map((size) => (
+          <OriginalCell key={size} size={size} source={source} crop={crop} />
+        ))}
+      </Frame>
 
-      <div className="compare__row">
-        <span className="compare__tag">Mosaic</span>
-        <div className="compare__cells">
-          {SIZES.map((size) => (
-            <MosaicCell
-              key={size}
-              size={size}
-              renderVersion={renderVersion}
-              outputSize={outputSize}
-              pixelated={pixelated}
-            />
-          ))}
-        </div>
-      </div>
+      <Frame
+        label="Mosaic"
+        action={
+          <button
+            type="button"
+            className="frame__action"
+            onClick={() => setPixelated((p) => !p)}
+            title={pixelated ? "Show smoothed" : "Show literal pixels"}
+          >
+            <Icon name={pixelated ? "eye" : "grid"} size={12} />
+            {pixelated ? "Perceptual" : "Literal"}
+          </button>
+        }
+      >
+        {SIZES.map((size) => (
+          <MosaicCell
+            key={size}
+            size={size}
+            renderVersion={renderVersion}
+            outputSize={outputSize}
+            pixelated={pixelated}
+          />
+        ))}
+      </Frame>
+    </div>
+  );
+}
 
-      <button type="button" className="btn btn--ghost btn--icon compare__toggle" onClick={() => setPixelated((p) => !p)}>
-        <Icon name={pixelated ? "eye" : "grid"} size={14} />
-        {pixelated ? "Perceptual (smoothed)" : "Literal (pixelated)"}
-      </button>
+function Frame(props: { label: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="frame">
+      <span className="frame__legend">{props.label}</span>
+      {props.action && <span className="frame__legend frame__legend--right">{props.action}</span>}
+      <div className="frame__body">{props.children}</div>
     </div>
   );
 }

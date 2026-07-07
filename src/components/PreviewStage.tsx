@@ -50,14 +50,19 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
     >
       {source ? (
         <div className="stage__content">
-          <div className="stage__canvas-wrap">
-            <canvas
-              ref={canvasRef}
-              className={`stage__canvas${transparent ? " is-checker" : ""}${
-                pending ? " is-pending" : ""
-              }`}
-            />
-            {pending && <div className="stage__updating">Updating…</div>}
+          <div className="frame frame--preview">
+            <span className="frame__legend">
+              Render · {outputSize}×{outputSize}
+            </span>
+            <div className="stage__canvas-wrap">
+              <canvas
+                ref={canvasRef}
+                className={`stage__canvas${transparent ? " is-checker" : ""}${
+                  pending ? " is-pending" : ""
+                }`}
+              />
+              {pending && <div className="stage__updating">Updating…</div>}
+            </div>
           </div>
           <ComparePreviews />
         </div>
