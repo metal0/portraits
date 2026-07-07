@@ -2,6 +2,7 @@ import { useImageLoader } from "@/hooks/useImageLoader";
 import { useRenderEngine } from "@/hooks/useRenderEngine";
 import { Uploader } from "@/components/Uploader";
 import { CropControls } from "@/components/CropControls";
+import { AdjustControls } from "@/components/AdjustControls";
 import { DisplayControls } from "@/components/DisplayControls";
 import { StyleControls } from "@/components/StyleControls";
 import { ColorControls } from "@/components/ColorControls";
@@ -30,6 +31,7 @@ export default function App() {
         <aside className="panel panel--left">
           <Uploader onFile={loadFile} error={error} loading={loading} />
           <CropControls />
+          <AdjustControls />
           <DisplayControls />
           <StyleControls />
           <ColorControls />

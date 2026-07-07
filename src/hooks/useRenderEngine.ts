@@ -17,6 +17,7 @@ export function useRenderEngine(): void {
   const dot = useStore((s) => s.dot);
   const relief = useStore((s) => s.relief);
   const color = useStore((s) => s.color);
+  const adjust = useStore((s) => s.adjust);
   const exportSettings = useStore((s) => s.exportSettings);
   const bumpRender = useStore((s) => s.bumpRender);
 
@@ -34,6 +35,7 @@ export function useRenderEngine(): void {
         dot,
         relief,
         color,
+        adjust,
         exportSettings,
       };
       renderToOutput(source, req);
@@ -51,6 +53,7 @@ export function useRenderEngine(): void {
     dot,
     relief,
     color,
+    adjust,
     exportSettings,
     bumpRender,
   ]);

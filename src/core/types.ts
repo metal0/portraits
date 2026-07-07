@@ -67,6 +67,22 @@ export interface ColorSettings {
   customPalette: string[];
 }
 
+/** Pre-sampling tone adjustments. All values neutral by default. */
+export interface AdjustSettings {
+  /** -100..100 additive brightness. */
+  brightness: number;
+  /** -100..100. */
+  contrast: number;
+  /** -100..100. */
+  saturation: number;
+  /** 0.2..3, 1 = neutral. */
+  gamma: number;
+  /** 0 = off, else 2..16 quantization levels per channel. */
+  posterize: number;
+  /** 0..100 unsharp amount. */
+  sharpen: number;
+}
+
 export interface ExportSettings {
   transparentBackground: boolean;
   circularMask: boolean;
@@ -88,5 +104,6 @@ export interface RenderRequest {
   dot: DotOptions;
   relief: ReliefOptions;
   color: ColorSettings;
+  adjust: AdjustSettings;
   exportSettings: ExportSettings;
 }

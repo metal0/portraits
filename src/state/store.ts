@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type {
+  AdjustSettings,
   ColorSettings,
   Crop,
   DotOptions,
@@ -10,6 +11,7 @@ import type {
   SquareOptions,
 } from "@/core/types";
 import { recommendGrid } from "@/core/grid";
+import { NEUTRAL_ADJUST } from "@/core/adjust";
 
 interface AppState {
   /** Loaded source image; null until the user provides one. */
@@ -23,6 +25,7 @@ interface AppState {
   dot: DotOptions;
   relief: ReliefOptions;
   color: ColorSettings;
+  adjust: AdjustSettings;
   exportSettings: ExportSettings;
 
   setSource: (bitmap: ImageBitmap | null, name?: string | null) => void;
@@ -33,6 +36,7 @@ interface AppState {
   setDot: (patch: Partial<DotOptions>) => void;
   setRelief: (patch: Partial<ReliefOptions>) => void;
   setColor: (patch: Partial<ColorSettings>) => void;
+  setAdjust: (patch: Partial<AdjustSettings>) => void;
   setExport: (patch: Partial<ExportSettings>) => void;
 
   /** Bumped after each engine render so consumers can redraw. */
@@ -86,6 +90,7 @@ export const useStore = create<AppState>((set, get) => ({
     paletteSize: 8,
     customPalette: [],
   },
+  adjust: { ...NEUTRAL_ADJUST },
   exportSettings: {
     transparentBackground: false,
     circularMask: false,
@@ -100,6 +105,7 @@ export const useStore = create<AppState>((set, get) => ({
   setDot: (patch) => set((s) => ({ dot: { ...s.dot, ...patch } })),
   setRelief: (patch) => set((s) => ({ relief: { ...s.relief, ...patch } })),
   setColor: (patch) => set((s) => ({ color: { ...s.color, ...patch } })),
+  setAdjust: (patch) => set((s) => ({ adjust: { ...s.adjust, ...patch } })),
   setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
 
   renderVersion: 0,

@@ -97,6 +97,31 @@ test("crop zoom changes the output", async ({ page }) => {
     .not.toBe(before.variance);
 });
 
+test("posterize reduces distinct colors", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+  const before = await canvasStats(page);
+
+  await page.getByRole("slider", { name: /Posterize/ }).fill("2");
+  await expect
+    .poll(async () => (await canvasStats(page)).distinct)
+    .toBeLessThan(before.distinct);
+});
+
+test("auto-enhance widens luminance range", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+  const before = await canvasStats(page);
+
+  await page.getByRole("button", { name: "Auto-enhance" }).click();
+  // Contrast slider should move off zero.
+  const contrast = await page.getByRole("slider", { name: /Contrast/ }).inputValue();
+  expect(Number(contrast)).not.toBe(0);
+  await expect
+    .poll(async () => (await canvasStats(page)).variance)
+    .toBeGreaterThan(before.variance * 0.9);
+});
+
 test("exports a PNG download", async ({ page }) => {
   await page.goto("/");
   await upload(page);

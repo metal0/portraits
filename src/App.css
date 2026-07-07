@@ -286,6 +286,27 @@ input[type="range"] {
   justify-content: center;
   gap: var(--space-2);
 }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.icon-btn--danger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

@@ -1,6 +1,7 @@
 import type { RenderRequest } from "../types";
 import type { Ctx2D } from "../graphics";
 import { sampleGrid } from "../sampling";
+import { applyAdjustments } from "../adjust";
 import { renderSquare } from "./square";
 import { renderDot } from "./dot";
 
@@ -25,7 +26,7 @@ export function renderPortrait(ctx: Ctx2D, source: ImageBitmap, req: RenderReque
     ctx.fillRect(0, 0, size, size);
   }
 
-  const sample = sampleGrid(source, req.crop, req.gridSize);
+  const sample = applyAdjustments(sampleGrid(source, req.crop, req.gridSize), req.adjust);
 
   if (req.renderMode === "dot") {
     renderDot(ctx, sample, req);
