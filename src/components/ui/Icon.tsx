@@ -143,6 +143,7 @@ const ICONS = {
     ),
   },
   check: { body: <path d="M20 6 9 17l-5-5" /> },
+  chevron: { body: <path d="m6 9 6 6 6-6" /> },
   x: { body: <path d="M18 6 6 18M6 6l12 12" /> },
   square: { body: <rect x="4" y="4" width="16" height="16" rx="1.5" /> },
   circle: { body: <circle cx="12" cy="12" r="7" /> },

@@ -35,7 +35,7 @@ export function AdjustControls() {
   );
 
   return (
-    <Section icon="sliders" title="Adjust" actions={actions}>
+    <Section icon="sliders" title="Adjust" actions={actions} collapsible defaultCollapsed>
       <SliderField
         label="Brightness"
         value={adjust.brightness}

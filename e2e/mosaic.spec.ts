@@ -12,6 +12,11 @@ async function upload(page: Page) {
   await expect(page.locator(".stage__canvas")).toBeVisible();
 }
 
+/** Expand a collapsible section by its header title. */
+async function expand(page: Page, name: string) {
+  await page.getByRole("button", { name, exact: true }).click();
+}
+
 /** Read the visible stage canvas and summarize its pixels. */
 async function canvasStats(page: Page) {
   return page.evaluate(() => {
@@ -88,6 +93,7 @@ test("grayscale reduces to neutral tones", async ({ page }) => {
 test("crop zoom changes the output", async ({ page }) => {
   await page.goto("/");
   await upload(page);
+  await expand(page, "Crop");
   const before = await canvasStats(page);
 
   const zoom = page.getByRole("slider", { name: /Zoom/ });
@@ -100,6 +106,7 @@ test("crop zoom changes the output", async ({ page }) => {
 test("posterize reduces distinct colors", async ({ page }) => {
   await page.goto("/");
   await upload(page);
+  await expand(page, "Adjust");
   const before = await canvasStats(page);
 
   await page.getByRole("slider", { name: /Posterize/ }).fill("2");
@@ -114,6 +121,7 @@ test("auto-enhance widens luminance range", async ({ page }) => {
   const before = await canvasStats(page);
 
   await page.getByRole("button", { name: "Auto-enhance" }).click();
+  await expand(page, "Adjust");
   // Contrast slider should move off zero.
   const contrast = await page.getByRole("slider", { name: /Contrast/ }).inputValue();
   expect(Number(contrast)).not.toBe(0);

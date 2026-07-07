@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 
 export function Section(props: {
@@ -6,17 +6,39 @@ export function Section(props: {
   title: string;
   actions?: ReactNode;
   children: ReactNode;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 }) {
+  const [open, setOpen] = useState(!props.defaultCollapsed);
+  const showBody = !props.collapsible || open;
+
   return (
-    <section className="section">
+    <section className={`section${props.collapsible ? " section--collapsible" : ""}`}>
       <div className="section__head">
-        <h2 className="section__title">
-          <Icon name={props.icon} size={13} />
-          {props.title}
-        </h2>
-        {props.actions}
+        {props.collapsible ? (
+          <button
+            type="button"
+            className="section__toggle"
+            aria-expanded={open}
+            onClick={() => setOpen((o) => !o)}
+          >
+            <Icon name={props.icon} size={13} />
+            <span>{props.title}</span>
+            <Icon
+              name="chevron"
+              size={14}
+              className={`section__chevron${open ? " is-open" : ""}`}
+            />
+          </button>
+        ) : (
+          <h2 className="section__title">
+            <Icon name={props.icon} size={13} />
+            {props.title}
+          </h2>
+        )}
+        {props.actions && <div className="section__actions">{props.actions}</div>}
       </div>
-      {props.children}
+      {showBody && props.children}
     </section>
   );
 }

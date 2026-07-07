@@ -92,6 +92,40 @@
   gap: var(--space-1);
 }
 
+.section__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  padding: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  transition: color 0.12s;
+}
+.section__toggle:hover {
+  color: var(--text);
+}
+.section__toggle > svg:first-child {
+  color: var(--accent-hover);
+}
+.section__chevron {
+  margin-left: auto;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+.section__chevron.is-open {
+  transform: rotate(0deg);
+}
+
+.panel--right {
+  /* Keep the last section (Export) anchored to the bottom. */
+}
+.panel--right > .section:last-child {
+  margin-top: auto;
+}
+
 .section--placeholder .section__stub {
   padding: var(--space-4);
   border: 1px dashed var(--border-strong);

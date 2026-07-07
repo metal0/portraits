@@ -10,7 +10,7 @@ export function CropControls() {
   if (!hasImage) return null;
 
   return (
-    <Section icon="crop" title="Crop">
+    <Section icon="crop" title="Crop" collapsible defaultCollapsed>
       <SliderField
         label="Zoom"
         value={Number(crop.scale.toFixed(2))}

@@ -35,13 +35,13 @@ export default function App() {
           <DisplayControls />
           <StyleControls />
           <ColorControls />
-          <ExportControls />
         </aside>
 
         <PreviewStage onFile={loadFile} />
 
         <aside className="panel panel--right">
           <SmallPreviews />
+          <ExportControls />
         </aside>
       </div>
     </div>
