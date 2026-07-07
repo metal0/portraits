@@ -36,6 +36,23 @@
   color: var(--text-dim);
 }
 
+.app__github {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.app__github:hover {
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+
 .app__body {
   flex: 1;
   display: grid;

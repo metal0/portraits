@@ -1,94 +1,75 @@
-# Pixel Mosaic Portrait
+# Portraits
 
-A browser-only tool that converts a photo into a **pixel mosaic / halftone avatar**, optimized for how it will look at small social-media profile sizes.
+Turn a photo into a pixel mosaic avatar that still reads as a face when it's shrunk down to a tiny profile picture.
 
-The whole idea: you tell it *where* the avatar will be shown (e.g. "64px in Discord"), and it back-solves a grid that stays recognizable as a face at that size while looking like a crisp block mosaic up close.
+### [**Try it live at portraits.i0.tf**](https://portraits.i0.tf)
 
-**No backend. No uploads. No tracking.** The image never leaves your browser.
+Everything runs in your browser. No backend, no uploads, no tracking. Your photo never leaves the tab.
 
----
+## What it does
 
-## Stack
+Most avatars get resized down to 32 or 64 pixels by whatever app you post them in, and a normal photo turns to mush at that size. Portraits works the problem backwards: you tell it how big the avatar will actually be shown (say, "64px in Discord"), and it builds a mosaic grid coarse enough to survive that shrink while still looking like a sharp block mosaic when someone views it full size.
 
-- **Vite + React 19 + TypeScript**
-- **Zustand** for state
-- **Canvas 2D + Web Workers** (OffscreenCanvas) for the rendering engine
-- Vanilla CSS with design tokens — zero runtime UI dependencies
+You upload a photo, frame it, pick a look, and download a clean PNG or SVG.
 
-The image engine lives in [`src/core/`](src/core/) as pure, framework-agnostic functions so it can run on the main thread or inside a worker, and be unit-tested in isolation.
+## Features
 
-## Develop
+- **Size-aware grid.** Enter the display size you're targeting and the grid resolution is chosen for you, so the face stays recognizable at that size.
+- **Three render modes.** Square blocks, dot halftone, or a raised relief mode with soft 3D shading.
+- **Color or grayscale**, plus image adjustments (brightness, contrast, and friends) and a one-click auto-enhance.
+- **Limited palettes** with Floyd-Steinberg dithering. Ships with 1-bit, Grayscale, Game Boy, and Minecraft palettes, or bring your own colors.
+- **Crop and mask.** Square or circle-safe framing, optional circular mask, transparent or solid background.
+- **Presets.** Save any combination of settings, rename or delete them, and export or import them as JSON to share.
+- **Real exports.** PNG at 512, 1024, or 2048 pixels, or SVG vector output for square and dot modes.
 
-```bash
-npm install
-npm run dev        # http://localhost:5173
-npm run build      # type-check + production build → dist/
-npm run preview    # serve the production build locally
-npm run typecheck
-npm run test:e2e   # Playwright E2E against your local Chrome (no browser download)
-```
+## How the grid math works
 
-### E2E tests
-
-[`e2e/`](e2e/) drives the app in real Chrome via Playwright's `channel: "chrome"`,
-so no browser binaries are downloaded. A dependency-free PNG encoder
-([`e2e/fixtures/makeImage.ts`](e2e/fixtures/makeImage.ts)) synthesizes a
-deterministic test "face", and the specs verify upload → render → mode switch →
-grayscale → crop → PNG export by reading actual canvas pixels.
-
-## Grid math (the core concept)
+Two lines do the important part:
 
 ```ts
 gridSize  = clamp(round(displaySizePx / targetBlockScreenPx), 12, 128)
 blockSize = outputSizePx / gridSize
 ```
 
-Example: shown at **64px**, block target **2px** → `64/2 = 32` blocks. Export at **1024px** → `1024/32 = 32px` per block. Result: a 1024×1024 avatar built from a 32×32 mosaic.
+Say the avatar will be shown at **64px** and you want each block to read as roughly **2px** on screen. That gives `64 / 2 = 32` blocks across. Export at **1024px** and each block becomes `1024 / 32 = 32px`. The result is a 1024x1024 image built from a crisp 32x32 mosaic.
 
-## Deploy — Cloudflare Workers (Static Assets)
+## Running it locally
 
-Cloudflare folded static hosting into **Workers Static Assets**, so a static site
-is now a Worker with no server code. This repo ships a [`wrangler.jsonc`](wrangler.jsonc)
-that points a Worker at `dist/` — SPA fallback and the CSP in
-[`public/_headers`](public/_headers) are handled without any Worker script.
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # type-check + production build into dist/
+npm run preview    # serve the production build
+npm run typecheck
+npm run test:e2e   # Playwright against your local Chrome (no browser download)
+```
 
-### Git integration (recommended)
+### Tech
 
-1. Push to the private `metal0/portraits` repo (already wired).
-2. Cloudflare dashboard → **Workers & Pages → Create → Workers → Import a repository**,
-   select `metal0/portraits`.
-3. Build settings:
-   - **Build command:** `npm run build`
-   - **Deploy command:** `npx wrangler deploy`
+- Vite, React 19, and TypeScript
+- Zustand for state
+- Canvas 2D with Web Workers (OffscreenCanvas) for rendering
+- Plain CSS with design tokens, no runtime UI dependencies
 
-   Cloudflare reads `wrangler.jsonc` for the assets config. Every push to `main`
-   triggers a new build & deploy.
+The image engine lives in [`src/core/`](src/core/) as pure, framework-agnostic functions, so it runs on the main thread or inside a worker and stays easy to unit-test on its own.
 
-### Wrangler CLI (optional)
+### End-to-end tests
+
+[`e2e/`](e2e/) drives the app in real Chrome through Playwright's `channel: "chrome"`, so nothing gets downloaded. A dependency-free PNG encoder ([`e2e/fixtures/makeImage.ts`](e2e/fixtures/makeImage.ts)) generates a deterministic test face, and the specs walk the full flow (upload, render, mode switch, grayscale, crop, PNG export) by reading actual canvas pixels.
+
+## Deploying
+
+The site ships as a Cloudflare Worker using Static Assets, so there's no server code to run. The included [`wrangler.jsonc`](wrangler.jsonc) points a Worker at `dist/`, handles SPA routing, and applies the strict CSP and privacy headers from [`public/_headers`](public/_headers) (no external calls are permitted).
+
+**Git integration (recommended):** in the Cloudflare dashboard, go to Workers & Pages, create a Worker by importing the repo, and set the build command to `npm run build` and the deploy command to `npx wrangler deploy`. Cloudflare reads `wrangler.jsonc` for the rest, and every push to `main` triggers a build and deploy.
+
+**Wrangler CLI:**
 
 ```bash
 npm run build
 npx wrangler deploy
 ```
 
-SPA routing comes from `not_found_handling: "single-page-application"` in
-`wrangler.jsonc`; `public/_headers` applies the strict CSP and privacy headers
-(no external calls permitted).
+## License
 
-## Features
-
-- **Input** — upload / drag-drop / paste; PNG/JPG/WEBP/AVIF; EXIF orientation
-- **Crop** — zoom + pan into a square
-- **Adjust** — brightness / contrast / saturation / gamma / posterize / sharpen + one-click auto-enhance
-- **Display-size driven grid** — presets (Discord, X, Instagram, GitHub) + auto/override grid
-- **Render modes** — square mosaic, dot halftone (circle/square/diamond), relief 3D (raised bevel / size / isometric)
-- **Color** — full / grayscale / B&W threshold / duotone / limited palette (median-cut or custom swatches, Game Boy / Minecraft presets) with Floyd–Steinberg dithering
-- **Presets** — save the full look, auto-persisted to your browser, inline with the built-ins, JSON import/export
-- **Preview** — live large preview + profile-size strip (24–128px), literal-vs-perceptual toggle
-- **Export** — PNG (512/1024/2048, circular mask, transparent bg) and crisp vector SVG
-
-## Roadmap (not yet built)
-
-Batch export, manual per-tile paint, readability meter, Web Worker offload for large exports, local face detection.
-
-See [`pixel_mosaic_portrait_tool_spec.md`](pixel_mosaic_portrait_tool_spec.md) for the full spec.
+MIT

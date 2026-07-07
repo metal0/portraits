@@ -9,7 +9,10 @@ import { ColorControls } from "@/components/ColorControls";
 import { ExportControls } from "@/components/ExportControls";
 import { PreviewStage } from "@/components/PreviewStage";
 import { SmallPreviews } from "@/components/SmallPreviews";
+import { Icon } from "@/components/ui/Icon";
 import "./App.css";
+
+const REPO_URL = "https://github.com/metal0/portraits";
 
 export default function App() {
   const { loadFile, error, loading } = useImageLoader();
@@ -22,9 +25,18 @@ export default function App() {
           <span className="app__logo" aria-hidden />
           <div>
             <h1>Pixel Mosaic Portrait</h1>
-            <p className="app__tagline">Runs entirely in your browser — no uploads.</p>
+            <p className="app__tagline">Runs entirely in your browser, no uploads.</p>
           </div>
         </div>
+        <a
+          className="app__github"
+          href={REPO_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="View source on GitHub"
+        >
+          <Icon name="github" size={20} title="GitHub" />
+        </a>
       </header>
 
       <div className="app__body">
