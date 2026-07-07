@@ -3,7 +3,7 @@
 Turn a photo into a pixel-art avatar that still looks like *you*, even when an app shrinks it down to a tiny profile picture.
 
 <p align="center">
-  <img src="docs/preview.png" alt="Two portraits and their mosaics shown at 16, 32, 64, and 128 pixels" width="640">
+  <img src="docs/preview.png" alt="Two portraits and their mosaics shown at 16, 32, 64, and 128 pixels" width="380">
 </p>
 
 <p align="center">
