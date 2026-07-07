@@ -25,7 +25,16 @@ npm run dev        # http://localhost:5173
 npm run build      # type-check + production build → dist/
 npm run preview    # serve the production build locally
 npm run typecheck
+npm run test:e2e   # Playwright E2E against your local Chrome (no browser download)
 ```
+
+### E2E tests
+
+[`e2e/`](e2e/) drives the app in real Chrome via Playwright's `channel: "chrome"`,
+so no browser binaries are downloaded. A dependency-free PNG encoder
+([`e2e/fixtures/makeImage.ts`](e2e/fixtures/makeImage.ts)) synthesizes a
+deterministic test "face", and the specs verify upload → render → mode switch →
+grayscale → crop → PNG export by reading actual canvas pixels.
 
 ## Grid math (the core concept)
 
