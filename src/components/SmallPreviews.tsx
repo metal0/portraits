@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
 import { PREVIEW_SIZES } from "@/core/grid";
+import { Section } from "./ui/Controls";
+import { Icon } from "./ui/Icon";
 
 export function SmallPreviews() {
   const source = useStore((s) => s.source);
@@ -11,16 +13,14 @@ export function SmallPreviews() {
 
   if (!source) {
     return (
-      <section className="section">
-        <h2 className="section__title">Small previews</h2>
+      <Section icon="eye" title="Small previews">
         <div className="section__stub">Upload an image to preview at profile sizes.</div>
-      </section>
+      </Section>
     );
   }
 
   return (
-    <section className="section">
-      <h2 className="section__title">At profile size</h2>
+    <Section icon="eye" title="At profile size">
       <div className="preview-strip">
         {PREVIEW_SIZES.map((size) => (
           <SmallPreview
@@ -34,12 +34,13 @@ export function SmallPreviews() {
       </div>
       <button
         type="button"
-        className="btn btn--ghost"
+        className="btn btn--ghost btn--icon"
         onClick={() => setPixelated((p) => !p)}
       >
+        <Icon name={pixelated ? "eye" : "grid"} size={14} />
         {pixelated ? "Perceptual (smoothed)" : "Literal (pixelated)"}
       </button>
-    </section>
+    </Section>
   );
 }
 

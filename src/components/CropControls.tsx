@@ -1,5 +1,6 @@
 import { useStore } from "@/state/store";
-import { SliderField } from "./ui/Controls";
+import { Section, SliderField } from "./ui/Controls";
+import { Icon } from "./ui/Icon";
 
 export function CropControls() {
   const crop = useStore((s) => s.crop);
@@ -9,8 +10,7 @@ export function CropControls() {
   if (!hasImage) return null;
 
   return (
-    <section className="section">
-      <h2 className="section__title">Crop</h2>
+    <Section icon="crop" title="Crop">
       <SliderField
         label="Zoom"
         value={Number(crop.scale.toFixed(2))}
@@ -38,11 +38,11 @@ export function CropControls() {
       />
       <button
         type="button"
-        className="btn btn--ghost"
+        className="btn btn--ghost btn--icon"
         onClick={() => setCrop({ x: 0.5, y: 0.5, scale: 1, rotation: 0 })}
       >
-        Reset crop
+        <Icon name="reset" size={14} /> Reset crop
       </button>
-    </section>
+    </Section>
   );
 }

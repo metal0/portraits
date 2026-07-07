@@ -1,5 +1,5 @@
 import { useStore } from "@/state/store";
-import { Segmented, SliderField, ColorField } from "./ui/Controls";
+import { Section, Segmented, SliderField, ColorField } from "./ui/Controls";
 import type { ColorMode } from "@/core/types";
 
 export function ColorControls() {
@@ -7,9 +7,7 @@ export function ColorControls() {
   const setColor = useStore((s) => s.setColor);
 
   return (
-    <section className="section">
-      <h2 className="section__title">Color</h2>
-
+    <Section icon="palette" title="Color">
       <Segmented<ColorMode>
         value={color.mode}
         onChange={(mode) => setColor({ mode })}
@@ -46,6 +44,6 @@ export function ColorControls() {
           />
         </div>
       )}
-    </section>
+    </Section>
   );
 }

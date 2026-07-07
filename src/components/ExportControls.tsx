@@ -1,6 +1,7 @@
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
-import { Segmented, Toggle, ColorField } from "./ui/Controls";
+import { Section, Segmented, Toggle, ColorField } from "./ui/Controls";
+import { Icon } from "./ui/Icon";
 
 const OUTPUT_SIZES = [512, 1024, 2048] as const;
 
@@ -32,9 +33,7 @@ export function ExportControls() {
   };
 
   return (
-    <section className="section">
-      <h2 className="section__title">Export</h2>
-
+    <Section icon="download" title="Export">
       <div className="field">
         <span className="field__label">Output resolution</span>
         <Segmented<string>
@@ -62,9 +61,14 @@ export function ExportControls() {
         />
       )}
 
-      <button type="button" className="btn btn--primary" onClick={download} disabled={!hasImage}>
-        Download PNG · {grid.outputSizePx}²
+      <button
+        type="button"
+        className="btn btn--primary btn--icon"
+        onClick={download}
+        disabled={!hasImage}
+      >
+        <Icon name="download" size={15} /> Download PNG · {grid.outputSizePx}²
       </button>
-    </section>
+    </Section>
   );
 }

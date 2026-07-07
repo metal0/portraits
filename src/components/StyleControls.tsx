@@ -1,5 +1,6 @@
 import { useStore } from "@/state/store";
-import { Segmented, SliderField, Toggle, ColorField } from "./ui/Controls";
+import { Section, Segmented, SliderField, Toggle, ColorField } from "./ui/Controls";
+import { Icon } from "./ui/Icon";
 import type { DotShape, RenderMode } from "@/core/types";
 
 export function StyleControls() {
@@ -11,15 +12,13 @@ export function StyleControls() {
   const setDot = useStore((s) => s.setDot);
 
   return (
-    <section className="section">
-      <h2 className="section__title">Style</h2>
-
+    <Section icon="sliders" title="Style">
       <Segmented<RenderMode>
         value={renderMode}
         onChange={setRenderMode}
         options={[
-          { value: "square", label: "Square" },
-          { value: "dot", label: "Dot" },
+          { value: "square", label: <Icon name="square" size={16} />, title: "Square" },
+          { value: "dot", label: <Icon name="circle" size={16} />, title: "Dot" },
         ]}
       />
 
@@ -62,9 +61,9 @@ export function StyleControls() {
             value={dot.dotShape}
             onChange={(dotShape) => setDot({ dotShape })}
             options={[
-              { value: "circle", label: "●" },
-              { value: "square", label: "■" },
-              { value: "diamond", label: "◆" },
+              { value: "circle", label: <Icon name="circle" size={15} />, title: "Circle" },
+              { value: "square", label: <Icon name="square" size={15} />, title: "Square" },
+              { value: "diamond", label: <Icon name="diamond" size={15} />, title: "Diamond" },
             ]}
           />
           <SliderField
@@ -90,6 +89,6 @@ export function StyleControls() {
           />
         </>
       )}
-    </section>
+    </Section>
   );
 }

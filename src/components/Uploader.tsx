@@ -1,5 +1,7 @@
 import { useRef } from "react";
 import { useStore } from "@/state/store";
+import { Section } from "./ui/Controls";
+import { Icon } from "./ui/Icon";
 
 export function Uploader(props: {
   onFile: (file: File) => void;
@@ -10,24 +12,29 @@ export function Uploader(props: {
   const sourceName = useStore((s) => s.sourceName);
 
   return (
-    <section className="section">
-      <h2 className="section__title">Image</h2>
+    <Section icon="image" title="Image">
       <button
         type="button"
         className="uploader"
         onClick={() => inputRef.current?.click()}
         disabled={props.loading}
       >
-        <span className="uploader__icon" aria-hidden>
-          ⬆
-        </span>
+        <Icon name="upload" size={22} className="uploader__icon" />
         <span className="uploader__text">
           {props.loading ? "Decoding…" : "Upload, drop, or paste"}
         </span>
         <span className="uploader__hint">PNG · JPG · WEBP · AVIF</span>
       </button>
-      {sourceName && <p className="uploader__file">{sourceName}</p>}
-      {props.error && <p className="uploader__error">{props.error}</p>}
+      {sourceName && (
+        <p className="uploader__file">
+          <Icon name="check" size={12} /> {sourceName}
+        </p>
+      )}
+      {props.error && (
+        <p className="uploader__error">
+          <Icon name="x" size={12} /> {props.error}
+        </p>
+      )}
       <input
         ref={inputRef}
         type="file"
@@ -39,6 +46,6 @@ export function Uploader(props: {
           e.target.value = "";
         }}
       />
-    </section>
+    </Section>
   );
 }

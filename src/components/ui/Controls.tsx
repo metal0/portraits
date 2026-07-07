@@ -1,4 +1,25 @@
 import type { ReactNode } from "react";
+import { Icon, type IconName } from "./Icon";
+
+export function Section(props: {
+  icon: IconName;
+  title: string;
+  actions?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="section">
+      <div className="section__head">
+        <h2 className="section__title">
+          <Icon name={props.icon} size={13} />
+          {props.title}
+        </h2>
+        {props.actions}
+      </div>
+      {props.children}
+    </section>
+  );
+}
 
 export function SliderField(props: {
   label: string;

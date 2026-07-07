@@ -1,6 +1,15 @@
 import { useStore } from "@/state/store";
 import { DISPLAY_PRESETS, GRID_MAX, GRID_MIN, recommendGrid } from "@/core/grid";
-import { SliderField } from "./ui/Controls";
+import { Section, SliderField } from "./ui/Controls";
+import { Icon, type IconName } from "./ui/Icon";
+
+const PRESET_ICON: Record<string, IconName> = {
+  "Discord small": "discord",
+  "Discord profile": "discord",
+  "Twitter/X avatar": "x_logo",
+  "Instagram profile": "instagram",
+  "GitHub avatar": "github",
+};
 
 export function DisplayControls() {
   const grid = useStore((s) => s.grid);
@@ -9,9 +18,7 @@ export function DisplayControls() {
   const recommended = recommendGrid(grid.displaySizePx, grid.targetBlockScreenPx);
 
   return (
-    <section className="section">
-      <h2 className="section__title">Display size</h2>
-
+    <Section icon="grid" title="Display size">
       <div className="preset-row">
         {Object.entries(DISPLAY_PRESETS).map(([name, preset]) => (
           <button
@@ -26,6 +33,7 @@ export function DisplayControls() {
               })
             }
           >
+            <Icon name={PRESET_ICON[name] ?? "grid"} size={13} />
             {name}
           </button>
         ))}
@@ -77,6 +85,6 @@ export function DisplayControls() {
       <p className="grid-effective">
         Active: {effectiveGrid}×{effectiveGrid} blocks
       </p>
-    </section>
+    </Section>
   );
 }
