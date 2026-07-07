@@ -1,11 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useStore } from "@/state/store";
 import { renderToOutput } from "@/render/engine";
 import type { RenderRequest } from "@/core/types";
 
+const DEBOUNCE_MS = 1000;
+
 /**
  * Mount once. Watches every setting that affects output and re-renders the
- * singleton output canvas, coalescing rapid changes into a single rAF frame.
+ * singleton output canvas. Renders are debounced so dragging a slider stays
+ * responsive; a brand-new image renders immediately. While a render is pending
+ * the store flags `renderPending` so exports can be blocked until it lands.
  */
 export function useRenderEngine(): void {
   const source = useStore((s) => s.source);
@@ -20,12 +24,21 @@ export function useRenderEngine(): void {
   const adjust = useStore((s) => s.adjust);
   const exportSettings = useStore((s) => s.exportSettings);
   const bumpRender = useStore((s) => s.bumpRender);
+  const setRenderPending = useStore((s) => s.setRenderPending);
+
+  const lastSource = useRef<ImageBitmap | null>(null);
 
   useEffect(() => {
-    if (!source) return;
+    if (!source) {
+      lastSource.current = null;
+      return;
+    }
 
-    let frame = 0;
-    frame = requestAnimationFrame(() => {
+    const immediate = source !== lastSource.current;
+    lastSource.current = source;
+    setRenderPending(true);
+
+    const run = () => {
       const req: RenderRequest = {
         crop,
         gridSize,
@@ -40,9 +53,10 @@ export function useRenderEngine(): void {
       };
       renderToOutput(source, req);
       bumpRender();
-    });
+    };
 
-    return () => cancelAnimationFrame(frame);
+    const id = setTimeout(run, immediate ? 0 : DEBOUNCE_MS);
+    return () => clearTimeout(id);
   }, [
     source,
     crop,
@@ -56,5 +70,6 @@ export function useRenderEngine(): void {
     adjust,
     exportSettings,
     bumpRender,
+    setRenderPending,
   ]);
 }

@@ -11,6 +11,13 @@ const PRESET_ICON: Record<string, IconName> = {
   "Twitter/X avatar": "x_logo",
   "Instagram profile": "instagram",
   "GitHub avatar": "github",
+  "LinkedIn profile": "linkedin",
+  "Facebook profile": "facebook",
+  "YouTube channel": "youtube",
+  "Reddit avatar": "reddit",
+  "Telegram photo": "telegram",
+  "Twitch profile": "twitch",
+  "WhatsApp photo": "whatsapp",
 };
 
 export function DisplayControls() {

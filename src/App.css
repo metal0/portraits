@@ -252,6 +252,48 @@ input[type="range"] {
   background-position: 0 0, 0 12px, 12px -12px, -12px 0;
 }
 
+.stage__canvas.is-pending {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.stage__updating {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: 12px;
+  color: var(--text-dim);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+.stage__updating::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.stage__canvas-wrap {
+  position: relative;
+}
+
 .stage--dragging {
   outline: 2px dashed var(--accent);
   outline-offset: -8px;

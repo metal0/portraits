@@ -139,7 +139,7 @@ export function StyleControls() {
                 label="Height"
                 value={Number(relief.heightScale.toFixed(2))}
                 min={0}
-                max={1}
+                max={3}
                 step={0.05}
                 onChange={(heightScale) => setRelief({ heightScale })}
               />
@@ -158,7 +158,7 @@ export function StyleControls() {
               label="Height"
               value={Number(relief.heightScale.toFixed(2))}
               min={0}
-              max={1}
+              max={3}
               step={0.05}
               onChange={(heightScale) => setRelief({ heightScale })}
             />

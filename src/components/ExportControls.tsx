@@ -22,6 +22,7 @@ export function ExportControls() {
   const sourceName = useStore((s) => s.sourceName);
   const gridSize = useStore((s) => s.effectiveGrid());
   const renderMode = useStore((s) => s.renderMode);
+  const pending = useStore((s) => s.renderPending);
 
   const saveBlob = (blob: Blob, ext: string) => {
     const url = URL.createObjectURL(blob);
@@ -80,15 +81,16 @@ export function ExportControls() {
         type="button"
         className="btn btn--primary btn--icon"
         onClick={downloadPng}
-        disabled={!hasImage}
+        disabled={!hasImage || pending}
       >
-        <Icon name="download" size={15} /> Download PNG · {grid.outputSizePx}²
+        <Icon name={pending ? "sparkles" : "download"} size={15} />
+        {pending ? "Rendering…" : `Download PNG · ${grid.outputSizePx}²`}
       </button>
       <button
         type="button"
         className="btn btn--ghost btn--icon"
         onClick={downloadSvg}
-        disabled={!hasImage || renderMode === "relief"}
+        disabled={!hasImage || pending || renderMode === "relief"}
         title={renderMode === "relief" ? "SVG supports square and dot modes" : undefined}
       >
         <Icon name="download" size={15} /> Download SVG (vector)

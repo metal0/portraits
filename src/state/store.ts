@@ -49,6 +49,10 @@ interface AppState {
   renderVersion: number;
   bumpRender: () => void;
 
+  /** True while a preview render is debouncing/in-flight (exports blocked). */
+  renderPending: boolean;
+  setRenderPending: (pending: boolean) => void;
+
   saveCurrentAsPreset: (name: string) => void;
   updatePreset: (id: string) => void;
   renamePreset: (id: string, name: string) => void;
@@ -147,7 +151,10 @@ export const useStore = create<AppState>()(
   setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
 
   renderVersion: 0,
-  bumpRender: () => set((s) => ({ renderVersion: s.renderVersion + 1 })),
+  bumpRender: () => set((s) => ({ renderVersion: s.renderVersion + 1, renderPending: false })),
+
+  renderPending: false,
+  setRenderPending: (renderPending) => set({ renderPending }),
 
   presets: [],
   saveCurrentAsPreset: (name) =>

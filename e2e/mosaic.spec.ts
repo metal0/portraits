@@ -10,6 +10,8 @@ async function upload(page: Page) {
     buffer: FACE,
   });
   await expect(page.locator(".stage__canvas")).toBeVisible();
+  // Wait for the (debounced) first render to actually paint the canvas.
+  await expect.poll(async () => (await canvasStats(page)).variance, { timeout: 5000 }).toBeGreaterThan(0);
 }
 
 /** Expand a collapsible section by its header title. */

@@ -27,6 +27,13 @@ export const DISPLAY_PRESETS: Record<string, DisplayPreset> = {
   "Twitter/X avatar": { displaySizePx: 48, targetBlockScreenPx: 1.75 },
   "Instagram profile": { displaySizePx: 110, targetBlockScreenPx: 2 },
   "GitHub avatar": { displaySizePx: 40, targetBlockScreenPx: 1.5 },
+  "LinkedIn profile": { displaySizePx: 56, targetBlockScreenPx: 2 },
+  "Facebook profile": { displaySizePx: 40, targetBlockScreenPx: 1.75 },
+  "YouTube channel": { displaySizePx: 48, targetBlockScreenPx: 2 },
+  "Reddit avatar": { displaySizePx: 36, targetBlockScreenPx: 1.5 },
+  "Telegram photo": { displaySizePx: 40, targetBlockScreenPx: 1.75 },
+  "Twitch profile": { displaySizePx: 50, targetBlockScreenPx: 2 },
+  "WhatsApp photo": { displaySizePx: 40, targetBlockScreenPx: 1.75 },
 };
 
 export const PREVIEW_SIZES = [24, 32, 48, 64, 96, 128] as const;

@@ -15,6 +15,7 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
   const grid = useStore((s) => s.grid);
   const effectiveGrid = useStore((s) => s.effectiveGrid());
   const transparent = useStore((s) => s.exportSettings.transparentBackground);
+  const pending = useStore((s) => s.renderPending);
 
   useEffect(() => {
     const dst = canvasRef.current;
@@ -50,8 +51,11 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
         <div className="stage__canvas-wrap">
           <canvas
             ref={canvasRef}
-            className={`stage__canvas${transparent ? " is-checker" : ""}`}
+            className={`stage__canvas${transparent ? " is-checker" : ""}${
+              pending ? " is-pending" : ""
+            }`}
           />
+          {pending && <div className="stage__updating">Updating…</div>}
         </div>
       ) : (
         <div className="stage__empty">
