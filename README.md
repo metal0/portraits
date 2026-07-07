@@ -2,7 +2,7 @@
 
 Turn a photo into a pixel mosaic avatar that still reads as a face when it's shrunk down to a tiny profile picture.
 
-### [**Try it live at portraits.i0.tf**](https://portraits.i0.tf)
+### [**Try it live**](https://portraits.i0.tf)
 
 Everything runs in your browser. No backend, no uploads, no tracking. Your photo never leaves the tab.
 
