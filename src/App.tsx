@@ -8,7 +8,6 @@ import { StyleControls } from "@/components/StyleControls";
 import { ColorControls } from "@/components/ColorControls";
 import { ExportControls } from "@/components/ExportControls";
 import { PreviewStage } from "@/components/PreviewStage";
-import { SmallPreviews } from "@/components/SmallPreviews";
 import { Icon } from "@/components/ui/Icon";
 import "./App.css";
 
@@ -44,17 +43,13 @@ export default function App() {
           <Uploader onFile={loadFile} error={error} loading={loading} />
           <CropControls />
           <AdjustControls />
+          <ColorControls />
           <DisplayControls />
           <StyleControls />
-          <ColorControls />
+          <ExportControls />
         </aside>
 
         <PreviewStage onFile={loadFile} />
-
-        <aside className="panel panel--right">
-          <SmallPreviews />
-          <ExportControls />
-        </aside>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
 import { recommendGrid, blockSize } from "@/core/grid";
+import { ComparePreviews } from "./ComparePreviews";
 
 const PREVIEW_MAX = 512;
 
@@ -48,14 +49,17 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
       onDrop={handleDrop}
     >
       {source ? (
-        <div className="stage__canvas-wrap">
-          <canvas
-            ref={canvasRef}
-            className={`stage__canvas${transparent ? " is-checker" : ""}${
-              pending ? " is-pending" : ""
-            }`}
-          />
-          {pending && <div className="stage__updating">Updating…</div>}
+        <div className="stage__content">
+          <div className="stage__canvas-wrap">
+            <canvas
+              ref={canvasRef}
+              className={`stage__canvas${transparent ? " is-checker" : ""}${
+                pending ? " is-pending" : ""
+              }`}
+            />
+            {pending && <div className="stage__updating">Updating…</div>}
+          </div>
+          <ComparePreviews />
         </div>
       ) : (
         <div className="stage__empty">

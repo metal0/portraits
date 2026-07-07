@@ -28,7 +28,7 @@ export function ColorControls() {
   const addSwatch = () => setColor({ customPalette: [...color.customPalette, "#888888"] });
 
   return (
-    <Section icon="palette" title="Color">
+    <Section icon="palette" title="Color" collapsible defaultCollapsed>
       <Segmented<ColorMode>
         value={color.mode}
         onChange={(mode) => setColor({ mode })}

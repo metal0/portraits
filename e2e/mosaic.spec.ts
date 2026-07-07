@@ -57,7 +57,7 @@ test("renders and stays interactive", async ({ page }) => {
   expect(square.distinct).toBeGreaterThan(20);
 
   // Profile-size preview strip is populated.
-  await expect(page.locator(".preview-cell__canvas")).toHaveCount(6);
+  await expect(page.locator(".preview-mosaic")).toHaveCount(4);
 });
 
 test("switching render mode re-renders", async ({ page }) => {
@@ -75,6 +75,7 @@ test("grayscale reduces to neutral tones", async ({ page }) => {
   await page.goto("/");
   await upload(page);
 
+  await expand(page, "Color");
   await page.getByRole("tab", { name: "Gray" }).click();
   const coloredPixels = () =>
     page.evaluate(() => {
@@ -136,6 +137,7 @@ test("palette mode quantizes to few colors", async ({ page }) => {
   await page.goto("/");
   await upload(page);
 
+  await expand(page, "Color");
   await page.getByRole("tab", { name: "Palette" }).click();
   await page.getByRole("tab", { name: "Auto" }).click();
   await page.getByRole("tab", { name: "4", exact: true }).click();
@@ -149,6 +151,7 @@ test("palette mode quantizes to few colors", async ({ page }) => {
 test("dithering changes the pixel layout", async ({ page }) => {
   await page.goto("/");
   await upload(page);
+  await expand(page, "Color");
   await page.getByRole("tab", { name: "B/W" }).click();
   const flat = await canvasStats(page);
 
