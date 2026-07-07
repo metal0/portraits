@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "portraits",
+  "compatibility_date": "2026-07-07",
+  // Static-assets-only Worker: no `main` entry, so no server code runs.
+  // Every request is served from ./dist; unmatched routes fall back to
+  // index.html (SPA), and public/_headers still applies the CSP.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

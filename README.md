@@ -36,28 +36,35 @@ blockSize = outputSizePx / gridSize
 
 Example: shown at **64px**, block target **2px** → `64/2 = 32` blocks. Export at **1024px** → `1024/32 = 32px` per block. Result: a 1024×1024 avatar built from a 32×32 mosaic.
 
-## Deploy — Cloudflare Pages
+## Deploy — Cloudflare Workers (Static Assets)
 
-This is a static SPA. Two ways to ship it:
+Cloudflare folded static hosting into **Workers Static Assets**, so a static site
+is now a Worker with no server code. This repo ships a [`wrangler.jsonc`](wrangler.jsonc)
+that points a Worker at `dist/` — SPA fallback and the CSP in
+[`public/_headers`](public/_headers) are handled without any Worker script.
 
 ### Git integration (recommended)
 
 1. Push to the private `metal0/portraits` repo (already wired).
-2. In the Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**, select the repo.
+2. Cloudflare dashboard → **Workers & Pages → Create → Workers → Import a repository**,
+   select `metal0/portraits`.
 3. Build settings:
-   - **Framework preset:** Vite
    - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-4. Deploy. Every push to `main` triggers a new build.
+   - **Deploy command:** `npx wrangler deploy`
 
-`public/_redirects` handles SPA routing; `public/_headers` applies a strict CSP and privacy headers (no external calls permitted).
+   Cloudflare reads `wrangler.jsonc` for the assets config. Every push to `main`
+   triggers a new build & deploy.
 
 ### Wrangler CLI (optional)
 
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name portraits
+npx wrangler deploy
 ```
+
+SPA routing comes from `not_found_handling: "single-page-application"` in
+`wrangler.jsonc`; `public/_headers` applies the strict CSP and privacy headers
+(no external calls permitted).
 
 ## Roadmap
 
