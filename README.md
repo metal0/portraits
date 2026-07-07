@@ -3,7 +3,7 @@
 Turn a photo into a pixel-art avatar that still looks like *you*, even when an app shrinks it down to a tiny profile picture.
 
 <p align="center">
-  <img src="docs/preview.png" alt="Two portraits and their mosaics shown at 16, 32, 64, and 128 pixels" width="380">
+  <img src="docs/preview.png" alt="Two portraits and their mosaics shown at 16, 32, 64, and 128 pixels" width="599">
 </p>
 
 <p align="center">
@@ -85,7 +85,13 @@ The image engine lives in [`src/core/`](src/core/) as pure, framework-agnostic f
 
 The site ships as a Cloudflare Worker using Static Assets, so there's no server code to run. The included [`wrangler.jsonc`](wrangler.jsonc) points a Worker at `dist/`, handles SPA routing, and applies the strict CSP and privacy headers from [`public/_headers`](public/_headers) (no external calls are permitted).
 
-**Git integration (recommended):** in the Cloudflare dashboard, go to Workers & Pages, create a Worker by importing the repo, and set the build command to `npm run build` and the deploy command to `npx wrangler deploy`. Cloudflare reads `wrangler.jsonc` for the rest, and every push to `main` triggers a build and deploy.
+**One click:** clones the repo into your own account, builds, deploys, and sets up push-to-deploy.
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/metal0/portraits)
+
+When prompted, set the build command to `npm run build` (a static-assets Worker has no entry point for Cloudflare to infer it from); everything else is read from `wrangler.jsonc`.
+
+**Git integration:** in the Cloudflare dashboard, go to Workers & Pages, create a Worker by importing the repo, and set the build command to `npm run build` and the deploy command to `npx wrangler deploy`. Cloudflare reads `wrangler.jsonc` for the rest, and every push to `main` triggers a build and deploy.
 
 **Wrangler CLI:**
 
