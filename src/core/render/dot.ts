@@ -1,6 +1,5 @@
 import type { DotShape, RenderRequest, SampledGrid } from "../types";
 import type { Ctx2D } from "../graphics";
-import { resolveCellColor } from "../color";
 
 const ALPHA_CUTOFF = 8;
 
@@ -42,9 +41,8 @@ export function renderDot(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): 
 
     const cx = (cell.gx + 0.5) * cellSize;
     const cy = (cell.gy + 0.5) * cellSize;
-    const [r, g, b] = resolveCellColor(cell, req.color);
 
-    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx.fillStyle = `rgb(${cell.r}, ${cell.g}, ${cell.b})`;
     drawShape(ctx, dotShape, cx, cy, radius);
   }
 }

@@ -1,6 +1,5 @@
 import type { RenderRequest, SampledGrid } from "../types";
 import type { Ctx2D } from "../graphics";
-import { resolveCellColor } from "../color";
 
 const ALPHA_CUTOFF = 8;
 
@@ -13,7 +12,7 @@ export function renderSquare(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest
   for (const cell of sample.cells) {
     if (cell.a < ALPHA_CUTOFF) continue;
 
-    const [r, g, b] = resolveCellColor(cell, req.color);
+    const { r, g, b } = cell;
     const x = cell.gx * cellSize + tileGapPx / 2;
     const y = cell.gy * cellSize + tileGapPx / 2;
     const size = cellSize - tileGapPx;

@@ -2,6 +2,10 @@ export type RenderMode = "square" | "dot" | "relief";
 
 export type ColorMode = "full-color" | "grayscale" | "threshold" | "duotone" | "palette";
 
+export type DitherMode = "none" | "floyd-steinberg";
+
+export type PaletteSource = "auto" | "custom";
+
 export type DotShape = "circle" | "square" | "diamond";
 
 /** A single sampled grid cell: averaged color + derived luminance. */
@@ -64,7 +68,9 @@ export interface ColorSettings {
   duotoneDark: string;
   duotoneLight: string;
   paletteSize: number;
+  paletteSource: PaletteSource;
   customPalette: string[];
+  dither: DitherMode;
 }
 
 /** Pre-sampling tone adjustments. All values neutral by default. */

@@ -122,6 +122,32 @@ test("auto-enhance widens luminance range", async ({ page }) => {
     .toBeGreaterThan(before.variance * 0.9);
 });
 
+test("palette mode quantizes to few colors", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+
+  await page.getByRole("tab", { name: "Palette" }).click();
+  await page.getByRole("tab", { name: "Auto" }).click();
+  await page.getByRole("tab", { name: "4", exact: true }).click();
+
+  // 4-color palette + anti-aliased tile edges → still a small color count.
+  await expect
+    .poll(async () => (await canvasStats(page)).distinct, { timeout: 5000 })
+    .toBeLessThan(40);
+});
+
+test("dithering changes the pixel layout", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+  await page.getByRole("tab", { name: "B/W" }).click();
+  const flat = await canvasStats(page);
+
+  await page.getByText(/Floyd.*dither/i).click();
+  await expect
+    .poll(async () => (await canvasStats(page)).variance)
+    .not.toBe(flat.variance);
+});
+
 test("exports a PNG download", async ({ page }) => {
   await page.goto("/");
   await upload(page);

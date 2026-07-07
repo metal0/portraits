@@ -442,6 +442,65 @@ input[type="range"] {
   gap: var(--space-4);
 }
 
+/* ---- Palette swatches ---- */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.swatch {
+  position: relative;
+  width: 30px;
+  height: 30px;
+}
+.swatch input[type="color"] {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+.swatch__remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+}
+.swatch__remove:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.swatch--add {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+}
+.swatch--add:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.chip__swatches {
+  display: inline-flex;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+}
+.chip__swatches span {
+  width: 8px;
+  height: 12px;
+}
+
 /* ---- Grid summary ---- */
 .grid-summary {
   display: flex;

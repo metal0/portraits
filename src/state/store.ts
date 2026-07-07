@@ -88,7 +88,9 @@ export const useStore = create<AppState>((set, get) => ({
     duotoneDark: "#1a1a2e",
     duotoneLight: "#e8e8f0",
     paletteSize: 8,
+    paletteSource: "auto",
     customPalette: [],
+    dither: "none",
   },
   adjust: { ...NEUTRAL_ADJUST },
   exportSettings: {
