@@ -38,36 +38,58 @@ function renderSize(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void {
 /** Variant 2: full tiles with a beveled raised face; drop shadow ~ height. */
 function renderHeight(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void {
   const cellSize = req.outputSizePx / sample.size;
-  const bevel = Math.max(1, cellSize * 0.16);
-  const { heightScale, shadowBlur } = req.relief;
+  const gap = cellSize * 0.09;
+  const s = cellSize - 2 * gap;
+  if (s <= 0) return;
 
+  const maxLift = cellSize * 0.95 * req.relief.heightScale;
+  const shadowStrength = Math.min(1, req.relief.shadowBlur / 40);
+  const shadowAlpha = 0.18 + 0.32 * shadowStrength;
+
+  const lift = (cell: Cell) => (1 - cell.luma) * maxLift;
+  const baseX = (cell: Cell) => cell.gx * cellSize + gap;
+  const baseY = (cell: Cell) => cell.gy * cellSize + gap;
+
+  // Pass 1: cast shadows on the base plane (so no shadow paints over a face).
+  ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
   for (const cell of sample.cells) {
     if (cell.a < ALPHA_CUTOFF) continue;
-    const darkness = 1 - cell.luma;
+    const h = lift(cell);
+    if (h <= 0.5) continue;
+    ctx.fillRect(baseX(cell) + h * 0.28, baseY(cell) + h * 0.28, s, s);
+  }
+
+  // Pass 2: extruded blocks — top face lifted up-left, side walls exposed.
+  for (const cell of sample.cells) {
+    if (cell.a < ALPHA_CUTOFF) continue;
     const rgb: RGB = [cell.r, cell.g, cell.b];
-    const x0 = cell.gx * cellSize;
-    const y0 = cell.gy * cellSize;
-    const s = cellSize;
-    const w = bevel;
+    const h = lift(cell);
+    const bx = baseX(cell);
+    const by = baseY(cell);
+    const dx = -h * 0.6;
+    const dy = -h * 0.6;
+    const fx = bx + dx;
+    const fy = by + dy;
 
-    ctx.shadowColor = "rgba(0,0,0,0.5)";
-    ctx.shadowBlur = darkness * shadowBlur * heightScale;
-    ctx.shadowOffsetX = darkness * bevel * heightScale;
-    ctx.shadowOffsetY = darkness * bevel * heightScale;
-    ctx.fillStyle = shade(rgb, 1);
-    ctx.fillRect(x0, y0, s, s);
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
+    if (h > 0.5) {
+      // Right wall.
+      quad(ctx, [[fx + s, fy], [fx + s, fy + s], [bx + s, by + s], [bx + s, by]], shade(rgb, 0.6));
+      // Bottom wall (darkest — faces away from the top-left light).
+      quad(ctx, [[fx, fy + s], [fx + s, fy + s], [bx + s, by + s], [bx, by + s]], shade(rgb, 0.42));
+    }
 
-    quad(ctx, [[x0, y0], [x0 + s, y0], [x0 + s - w, y0 + w], [x0 + w, y0 + w]], shade(rgb, 1.35));
-    quad(ctx, [[x0, y0], [x0 + w, y0 + w], [x0 + w, y0 + s - w], [x0, y0 + s]], shade(rgb, 1.18));
-    quad(ctx, [[x0 + s, y0], [x0 + s, y0 + s], [x0 + s - w, y0 + s - w], [x0 + s - w, y0 + w]], shade(rgb, 0.72));
-    quad(ctx, [[x0, y0 + s], [x0 + s, y0 + s], [x0 + s - w, y0 + s - w], [x0 + w, y0 + s - w]], shade(rgb, 0.58));
+    // Top face, lit and slightly brighter the taller it is.
+    ctx.fillStyle = shade(rgb, 1.05 + (1 - cell.luma) * 0.12);
+    ctx.fillRect(fx, fy, s, s);
 
-    ctx.fillStyle = shade(rgb, 1);
-    ctx.fillRect(x0 + w, y0 + w, s - 2 * w, s - 2 * w);
+    // Top-left rim highlight for a crisp raised edge.
+    ctx.strokeStyle = shade(rgb, 1.5);
+    ctx.lineWidth = Math.max(1, cellSize * 0.045);
+    ctx.beginPath();
+    ctx.moveTo(fx, fy + s);
+    ctx.lineTo(fx, fy);
+    ctx.lineTo(fx + s, fy);
+    ctx.stroke();
   }
 }
 
