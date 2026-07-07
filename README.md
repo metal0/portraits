@@ -75,10 +75,20 @@ SPA routing comes from `not_found_handling: "single-page-application"` in
 `wrangler.jsonc`; `public/_headers` applies the strict CSP and privacy headers
 (no external calls permitted).
 
-## Roadmap
+## Features
 
-**MVP:** upload → square crop → display-size input → auto grid → square + dot modes → color/grayscale → small-size preview → PNG export.
+- **Input** — upload / drag-drop / paste; PNG/JPG/WEBP/AVIF; EXIF orientation
+- **Crop** — zoom + pan into a square
+- **Adjust** — brightness / contrast / saturation / gamma / posterize / sharpen + one-click auto-enhance
+- **Display-size driven grid** — presets (Discord, X, Instagram, GitHub) + auto/override grid
+- **Render modes** — square mosaic, dot halftone (circle/square/diamond), relief 3D (raised bevel / size / isometric)
+- **Color** — full / grayscale / B&W threshold / duotone / limited palette (median-cut or custom swatches, Game Boy / Minecraft presets) with Floyd–Steinberg dithering
+- **Presets** — save the full look, auto-persisted to your browser, inline with the built-ins, JSON import/export
+- **Preview** — live large preview + profile-size strip (24–128px), literal-vs-perceptual toggle
+- **Export** — PNG (512/1024/2048, circular mask, transparent bg) and crisp vector SVG
 
-**V2:** circular mask, palette editor, relief/raised mode, SVG export, batch, manual tile paint, project JSON, local face detection.
+## Roadmap (not yet built)
+
+Batch export, manual per-tile paint, readability meter, Web Worker offload for large exports, local face detection.
 
 See [`pixel_mosaic_portrait_tool_spec.md`](pixel_mosaic_portrait_tool_spec.md) for the full spec.

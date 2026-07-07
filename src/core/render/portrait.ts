@@ -1,4 +1,4 @@
-import type { RenderRequest } from "../types";
+import type { RenderRequest, SampledGrid } from "../types";
 import type { Ctx2D } from "../graphics";
 import { sampleGrid } from "../sampling";
 import { applyAdjustments } from "../adjust";
@@ -6,6 +6,12 @@ import { applyColor } from "../colorize";
 import { renderSquare } from "./square";
 import { renderDot } from "./dot";
 import { renderRelief } from "./relief";
+
+/** Sample → adjust → colorize. Shared by canvas render and SVG export. */
+export function computeFrame(source: ImageBitmap, req: RenderRequest): SampledGrid {
+  const adjusted = applyAdjustments(sampleGrid(source, req.crop, req.gridSize), req.adjust);
+  return applyColor(adjusted, req.color);
+}
 
 /**
  * Render one complete portrait frame into `ctx`. The context's canvas is
@@ -28,8 +34,7 @@ export function renderPortrait(ctx: Ctx2D, source: ImageBitmap, req: RenderReque
     ctx.fillRect(0, 0, size, size);
   }
 
-  const adjusted = applyAdjustments(sampleGrid(source, req.crop, req.gridSize), req.adjust);
-  const sample = applyColor(adjusted, req.color);
+  const sample = computeFrame(source, req);
 
   if (req.renderMode === "dot") {
     renderDot(ctx, sample, req);

@@ -1,5 +1,8 @@
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
+import { currentRequest } from "@/render/buildRequest";
+import { computeFrame } from "@/core/render/portrait";
+import { buildSvg } from "@/core/export/svg";
 import { Section, Segmented, Toggle, ColorField } from "./ui/Controls";
 import { Icon } from "./ui/Icon";
 
@@ -18,18 +21,30 @@ export function ExportControls() {
   const hasImage = useStore((s) => s.source !== null);
   const sourceName = useStore((s) => s.sourceName);
   const gridSize = useStore((s) => s.effectiveGrid());
+  const renderMode = useStore((s) => s.renderMode);
 
-  const download = () => {
+  const saveBlob = (blob: Blob, ext: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${baseName(sourceName)}-mosaic-${gridSize}x${gridSize}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadPng = () => {
     const canvas = getOutputCanvas(grid.outputSizePx);
     canvas.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${baseName(sourceName)}-mosaic-${gridSize}x${gridSize}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
+      if (blob) saveBlob(blob, "png");
     }, "image/png");
+  };
+
+  const downloadSvg = () => {
+    const source = useStore.getState().source;
+    if (!source) return;
+    const req = currentRequest();
+    const svg = buildSvg(computeFrame(source, req), req);
+    saveBlob(new Blob([svg], { type: "image/svg+xml" }), "svg");
   };
 
   return (
@@ -64,10 +79,19 @@ export function ExportControls() {
       <button
         type="button"
         className="btn btn--primary btn--icon"
-        onClick={download}
+        onClick={downloadPng}
         disabled={!hasImage}
       >
         <Icon name="download" size={15} /> Download PNG · {grid.outputSizePx}²
+      </button>
+      <button
+        type="button"
+        className="btn btn--ghost btn--icon"
+        onClick={downloadSvg}
+        disabled={!hasImage || renderMode === "relief"}
+        title={renderMode === "relief" ? "SVG supports square and dot modes" : undefined}
+      >
+        <Icon name="download" size={15} /> Download SVG (vector)
       </button>
     </Section>
   );

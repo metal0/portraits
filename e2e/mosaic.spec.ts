@@ -205,3 +205,20 @@ test("exports a PNG download", async ({ page }) => {
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/\.png$/);
 });
+
+test("exports an SVG with vector shapes", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Download SVG/ }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.svg$/);
+
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(chunk as Buffer);
+  const svg = Buffer.concat(chunks).toString("utf8");
+  expect(svg).toContain("<svg");
+  expect(svg).toMatch(/<rect[^>]*fill="rgb\(/);
+});
