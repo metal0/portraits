@@ -2,6 +2,14 @@
 
 Turn a photo into a pixel-art avatar that still looks like *you*, even when an app shrinks it down to a tiny profile picture.
 
+<p align="center">
+  <img src="docs/preview.png" alt="Two portraits and their mosaics shown at 16, 32, 64, and 128 pixels" width="640">
+</p>
+
+<p align="center">
+  <em>Each photo and its mosaic at 16, 32, 64, and 128px. The grid is tuned for <strong>64px</strong>, the size most apps display, so the face stays clearest right where it counts.</em>
+</p>
+
 **[▶ Try it live](https://portraits.i0.tf)**
 
 Everything runs inside your browser tab. No server, no sign-up, no uploads. Your photo never leaves your computer.
@@ -13,6 +21,8 @@ Everything runs inside your browser tab. No server, no sign-up, no uploads. Your
 🕶️ &nbsp;**Keep your real face offline.** Profile photos get scraped, indexed, and fed into face-recognition systems and AI training sets. A pixel mosaic still reads as a recognizable "you" to friends and coworkers, but it isn't a clean photo a scanner can match to your identity.
 
 🔍 &nbsp;**Survives tiny sizes.** Discord, Slack, and GitHub squash your avatar down to 32 or 64 pixels wide, where a normal photo turns into a blurry smudge. Portraits works the other way around: you tell it how small the picture will be shown, and it builds a mosaic coarse enough to survive the shrink.
+
+🎯 &nbsp;**The blur isn't real protection.** A small, blurry avatar only looks private. On most platforms any user can fetch the full-resolution original you uploaded, so the sharp photo is one request away no matter how tiny it renders. The fix is to never upload a real photo in the first place: feed Portraits your face and use the mosaic itself as your source image, so the highest-resolution copy anyone can pull is already a mosaic.
 
 🔒 &nbsp;**Private by design.** All the work happens locally in your browser, so your original photo is never sent anywhere. Nobody, not us or any cloud service, ever sees it.
 
