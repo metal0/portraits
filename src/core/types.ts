@@ -77,3 +77,16 @@ export interface DisplayPreset {
   displaySizePx: number;
   targetBlockScreenPx: number;
 }
+
+/** Everything the render engine needs to produce one frame. */
+export interface RenderRequest {
+  crop: Crop;
+  gridSize: number;
+  outputSizePx: number;
+  renderMode: RenderMode;
+  square: SquareOptions;
+  dot: DotOptions;
+  relief: ReliefOptions;
+  color: ColorSettings;
+  exportSettings: ExportSettings;
+}

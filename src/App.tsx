@@ -1,14 +1,18 @@
-import { useStore } from "@/state/store";
-import { recommendGrid, blockSize } from "@/core/grid";
+import { useImageLoader } from "@/hooks/useImageLoader";
+import { useRenderEngine } from "@/hooks/useRenderEngine";
+import { Uploader } from "@/components/Uploader";
+import { CropControls } from "@/components/CropControls";
+import { DisplayControls } from "@/components/DisplayControls";
+import { StyleControls } from "@/components/StyleControls";
+import { ColorControls } from "@/components/ColorControls";
+import { ExportControls } from "@/components/ExportControls";
+import { PreviewStage } from "@/components/PreviewStage";
+import { SmallPreviews } from "@/components/SmallPreviews";
 import "./App.css";
 
 export default function App() {
-  const grid = useStore((s) => s.grid);
-  const effectiveGrid = useStore((s) => s.effectiveGrid());
-  const setGrid = useStore((s) => s.setGrid);
-
-  const recommended = recommendGrid(grid.displaySizePx, grid.targetBlockScreenPx);
-  const px = blockSize(grid.outputSizePx, effectiveGrid);
+  const { loadFile, error, loading } = useImageLoader();
+  useRenderEngine();
 
   return (
     <div className="app">
@@ -24,84 +28,20 @@ export default function App() {
 
       <div className="app__body">
         <aside className="panel panel--left">
-          <SectionPlaceholder title="Upload" />
-          <SectionPlaceholder title="Crop" />
-
-          <section className="section">
-            <h2 className="section__title">Display size</h2>
-            <label className="field">
-              <span className="field__label">
-                Shown at <strong>{grid.displaySizePx}px</strong>
-              </span>
-              <input
-                type="range"
-                min={16}
-                max={128}
-                step={1}
-                value={grid.displaySizePx}
-                onChange={(e) => setGrid({ displaySizePx: Number(e.target.value) })}
-              />
-            </label>
-            <label className="field">
-              <span className="field__label">
-                Block size target <strong>{grid.targetBlockScreenPx}px</strong>
-              </span>
-              <input
-                type="range"
-                min={1}
-                max={3}
-                step={0.25}
-                value={grid.targetBlockScreenPx}
-                onChange={(e) => setGrid({ targetBlockScreenPx: Number(e.target.value) })}
-              />
-            </label>
-          </section>
-
-          <SectionPlaceholder title="Style mode" />
-          <SectionPlaceholder title="Color mode" />
-          <SectionPlaceholder title="Export" />
+          <Uploader onFile={loadFile} error={error} loading={loading} />
+          <CropControls />
+          <DisplayControls />
+          <StyleControls />
+          <ColorControls />
+          <ExportControls />
         </aside>
 
-        <main className="stage">
-          <div className="stage__empty">
-            <div className="stage__grid-readout">
-              <div className="readout">
-                <span className="readout__value">
-                  {effectiveGrid}×{effectiveGrid}
-                </span>
-                <span className="readout__label">grid</span>
-              </div>
-              <div className="readout">
-                <span className="readout__value">{Math.round(px)}px</span>
-                <span className="readout__label">per block @ {grid.outputSizePx}</span>
-              </div>
-              <div className="readout">
-                <span className="readout__value">
-                  {recommended}×{recommended}
-                </span>
-                <span className="readout__label">recommended</span>
-              </div>
-            </div>
-            <p className="stage__hint">
-              Upload a photo to begin. The engine is wired — rendering lands in Phase 1.
-            </p>
-          </div>
-        </main>
+        <PreviewStage onFile={loadFile} />
 
         <aside className="panel panel--right">
-          <SectionPlaceholder title="Small previews" />
-          <SectionPlaceholder title="Readability" />
+          <SmallPreviews />
         </aside>
       </div>
     </div>
-  );
-}
-
-function SectionPlaceholder({ title }: { title: string }) {
-  return (
-    <section className="section section--placeholder">
-      <h2 className="section__title">{title}</h2>
-      <div className="section__stub">Coming soon</div>
-    </section>
   );
 }

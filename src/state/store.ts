@@ -35,6 +35,10 @@ interface AppState {
   setColor: (patch: Partial<ColorSettings>) => void;
   setExport: (patch: Partial<ExportSettings>) => void;
 
+  /** Bumped after each engine render so consumers can redraw. */
+  renderVersion: number;
+  bumpRender: () => void;
+
   /** Effective grid size: manual override if set, else recommended. */
   effectiveGrid: () => number;
 }
@@ -97,6 +101,9 @@ export const useStore = create<AppState>((set, get) => ({
   setRelief: (patch) => set((s) => ({ relief: { ...s.relief, ...patch } })),
   setColor: (patch) => set((s) => ({ color: { ...s.color, ...patch } })),
   setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
+
+  renderVersion: 0,
+  bumpRender: () => set((s) => ({ renderVersion: s.renderVersion + 1 })),
 
   effectiveGrid: () => {
     const { grid } = get();
