@@ -1,11 +1,14 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type {
   AdjustSettings,
   ColorSettings,
   Crop,
+  CustomPreset,
   DotOptions,
   ExportSettings,
   GridSettings,
+  PresetConfig,
   ReliefOptions,
   RenderMode,
   SquareOptions,
@@ -28,6 +31,9 @@ interface AppState {
   adjust: AdjustSettings;
   exportSettings: ExportSettings;
 
+  /** User-saved presets, persisted to localStorage. */
+  presets: CustomPreset[];
+
   setSource: (bitmap: ImageBitmap | null, name?: string | null) => void;
   setCrop: (patch: Partial<Crop>) => void;
   setGrid: (patch: Partial<GridSettings>) => void;
@@ -43,8 +49,34 @@ interface AppState {
   renderVersion: number;
   bumpRender: () => void;
 
+  saveCurrentAsPreset: (name: string) => void;
+  updatePreset: (id: string) => void;
+  renamePreset: (id: string, name: string) => void;
+  deletePreset: (id: string) => void;
+  applyPreset: (id: string) => void;
+  importPresets: (presets: CustomPreset[]) => void;
+
   /** Effective grid size: manual override if set, else recommended. */
   effectiveGrid: () => number;
+}
+
+function snapshot(s: AppState): PresetConfig {
+  return {
+    grid: { ...s.grid },
+    renderMode: s.renderMode,
+    square: { ...s.square },
+    dot: { ...s.dot },
+    relief: { ...s.relief },
+    color: { ...s.color, customPalette: [...s.color.customPalette] },
+    adjust: { ...s.adjust },
+    exportSettings: { ...s.exportSettings },
+  };
+}
+
+function newId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `p_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
 const initialCrop: Crop = { x: 0.5, y: 0.5, scale: 1, rotation: 0 };
@@ -56,9 +88,11 @@ const initialGrid: GridSettings = {
   gridOverride: null,
 };
 
-export const useStore = create<AppState>((set, get) => ({
-  source: null,
-  sourceName: null,
+export const useStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      source: null,
+      sourceName: null,
 
   crop: initialCrop,
   grid: initialGrid,
@@ -115,8 +149,43 @@ export const useStore = create<AppState>((set, get) => ({
   renderVersion: 0,
   bumpRender: () => set((s) => ({ renderVersion: s.renderVersion + 1 })),
 
-  effectiveGrid: () => {
-    const { grid } = get();
-    return grid.gridOverride ?? recommendGrid(grid.displaySizePx, grid.targetBlockScreenPx);
+  presets: [],
+  saveCurrentAsPreset: (name) =>
+    set((s) => ({ presets: [...s.presets, { id: newId(), name, config: snapshot(s) }] })),
+  updatePreset: (id) =>
+    set((s) => ({
+      presets: s.presets.map((p) => (p.id === id ? { ...p, config: snapshot(s) } : p)),
+    })),
+  renamePreset: (id, name) =>
+    set((s) => ({ presets: s.presets.map((p) => (p.id === id ? { ...p, name } : p)) })),
+  deletePreset: (id) => set((s) => ({ presets: s.presets.filter((p) => p.id !== id) })),
+  applyPreset: (id) => {
+    const preset = get().presets.find((p) => p.id === id);
+    if (!preset) return;
+    const c = preset.config;
+    set({
+      grid: { ...c.grid },
+      renderMode: c.renderMode,
+      square: { ...c.square },
+      dot: { ...c.dot },
+      relief: { ...c.relief },
+      color: { ...c.color, customPalette: [...c.color.customPalette] },
+      adjust: { ...c.adjust },
+      exportSettings: { ...c.exportSettings },
+    });
   },
-}));
+  importPresets: (list) =>
+    set((s) => ({ presets: [...s.presets, ...list.map((p) => ({ ...p, id: newId() }))] })),
+
+      effectiveGrid: () => {
+        const { grid } = get();
+        return grid.gridOverride ?? recommendGrid(grid.displaySizePx, grid.targetBlockScreenPx);
+      },
+    }),
+    {
+      name: "portraits-store",
+      version: 1,
+      partialize: (s) => ({ presets: s.presets }),
+    },
+  ),
+);

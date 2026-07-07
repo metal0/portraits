@@ -387,6 +387,40 @@ input[type="range"] {
   border-color: var(--accent);
 }
 
+.chip--custom {
+  padding: 0;
+  overflow: hidden;
+}
+.chip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  color: inherit;
+  font-size: 11px;
+}
+.chip__label svg {
+  color: var(--accent-hover);
+}
+.chip__act {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  align-self: stretch;
+  color: var(--text-faint);
+  border-left: 1px solid var(--border);
+}
+.chip__act:hover {
+  color: var(--text);
+  background: var(--bg-input);
+}
+.chip__act--danger:hover {
+  color: var(--danger);
+}
+.chip--add {
+  border-style: dashed;
+}
+
 /* ---- Segmented ---- */
 .segmented {
   display: flex;

@@ -105,6 +105,33 @@ export interface DisplayPreset {
   targetBlockScreenPx: number;
 }
 
+/** Snapshot of the visual configuration captured by a custom preset. */
+export interface PresetConfig {
+  grid: GridSettings;
+  renderMode: RenderMode;
+  square: SquareOptions;
+  dot: DotOptions;
+  relief: ReliefOptions;
+  color: ColorSettings;
+  adjust: AdjustSettings;
+  exportSettings: ExportSettings;
+}
+
+export interface CustomPreset {
+  id: string;
+  name: string;
+  config: PresetConfig;
+}
+
+export const PRESETS_FILE_VERSION = 1;
+
+export interface PresetsFile {
+  app: "portraits";
+  kind: "presets";
+  version: number;
+  presets: CustomPreset[];
+}
+
 /** Everything the render engine needs to produce one frame. */
 export interface RenderRequest {
   crop: Crop;

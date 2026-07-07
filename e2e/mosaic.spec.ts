@@ -4,7 +4,7 @@ import { makeFacePng } from "./fixtures/makeImage";
 const FACE = makeFacePng();
 
 async function upload(page: Page) {
-  await page.locator('input[type="file"]').setInputFiles({
+  await page.locator('input[accept*="image"]').setInputFiles({
     name: "face.png",
     mimeType: "image/png",
     buffer: FACE,
@@ -74,20 +74,20 @@ test("grayscale reduces to neutral tones", async ({ page }) => {
   await upload(page);
 
   await page.getByRole("tab", { name: "Gray" }).click();
-  const gray = await page.evaluate(() => {
-    const canvas = document.querySelector<HTMLCanvasElement>(".stage__canvas")!;
-    const { data } = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height);
-    let colored = 0;
-    for (let i = 0; i < data.length; i += 4 * 53) {
-      // Skip background corners; only count near-neutral vs saturated.
-      const max = Math.max(data[i], data[i + 1], data[i + 2]);
-      const min = Math.min(data[i], data[i + 1], data[i + 2]);
-      if (max - min > 24) colored++;
-    }
-    return colored;
-  });
+  const coloredPixels = () =>
+    page.evaluate(() => {
+      const canvas = document.querySelector<HTMLCanvasElement>(".stage__canvas")!;
+      const { data } = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height);
+      let colored = 0;
+      for (let i = 0; i < data.length; i += 4 * 53) {
+        const max = Math.max(data[i], data[i + 1], data[i + 2]);
+        const min = Math.min(data[i], data[i + 1], data[i + 2]);
+        if (max - min > 24) colored++;
+      }
+      return colored;
+    });
   // Grayscale tiles are neutral; only anti-aliased tile edges may deviate.
-  expect(gray).toBeLessThan(30);
+  await expect.poll(coloredPixels, { timeout: 5000 }).toBeLessThan(30);
 });
 
 test("crop zoom changes the output", async ({ page }) => {
@@ -170,6 +170,30 @@ test("relief mode renders all variants", async ({ page }) => {
   await expect
     .poll(async () => (await canvasStats(page)).distinct)
     .not.toBe(raised.distinct);
+});
+
+test("presets save, persist, apply, and delete", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+
+  // Distinctive config, then save as a preset (via the prompt dialog).
+  await page.getByRole("tab", { name: "Dot" }).click();
+  page.once("dialog", (d) => d.accept("My Dot"));
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("button", { name: "My Dot" })).toBeVisible();
+
+  // Change away, then applying the preset restores Dot mode.
+  await page.getByRole("tab", { name: "Relief" }).click();
+  await page.getByRole("button", { name: "My Dot" }).click();
+  await expect(page.getByRole("tab", { name: "Dot" })).toHaveAttribute("aria-selected", "true");
+
+  // Persists across reload (localStorage).
+  await page.reload();
+  await expect(page.getByRole("button", { name: "My Dot" })).toBeVisible();
+
+  // Delete removes it.
+  await page.getByRole("button", { name: "Delete preset" }).click();
+  await expect(page.getByRole("button", { name: "My Dot" })).toHaveCount(0);
 });
 
 test("exports a PNG download", async ({ page }) => {
