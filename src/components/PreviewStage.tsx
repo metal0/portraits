@@ -3,6 +3,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
 import { ComparePreviews } from "./ComparePreviews";
+import { ReadabilityMeter } from "./ReadabilityMeter";
 
 const PREVIEW_MAX = 512;
 
@@ -64,6 +65,7 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
               {pending && <div className="stage__updating">Updating…</div>}
             </div>
           </div>
+          <ReadabilityMeter />
           <ComparePreviews />
         </div>
       ) : (

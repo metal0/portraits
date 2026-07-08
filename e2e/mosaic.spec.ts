@@ -60,6 +60,11 @@ test("renders and stays interactive", async ({ page }) => {
 
   // Profile-size preview strip is populated.
   await expect(page.locator(".preview-mosaic")).toHaveCount(4);
+
+  // Readability meter renders a verdict.
+  await expect(page.locator(".meter__verdict")).toHaveText(
+    /Readable|Borderline|Too detailed|Too abstract/,
+  );
 });
 
 test("switching render mode re-renders", async ({ page }) => {

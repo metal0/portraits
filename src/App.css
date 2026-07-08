@@ -655,6 +655,66 @@ input[type="range"] {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- Readability meter ---- */
+.meter {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  --meter-color: var(--text-dim);
+}
+.meter--readable {
+  --meter-color: var(--ok);
+}
+.meter--borderline {
+  --meter-color: var(--warn);
+}
+.meter--detailed {
+  --meter-color: var(--danger);
+}
+.meter--abstract {
+  --meter-color: var(--accent-hover);
+}
+.meter__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--meter-color);
+  flex: none;
+}
+.meter__label {
+  color: var(--text-dim);
+}
+.meter__verdict {
+  font-weight: 600;
+  color: var(--meter-color);
+}
+.meter__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+.meter__bar > span {
+  display: block;
+  height: 100%;
+  background: var(--meter-color);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+.meter__score {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  min-width: 22px;
+  text-align: right;
+}
+
 /* ---- Bordered frame with a legend on the border ---- */
 .frame {
   position: relative;
