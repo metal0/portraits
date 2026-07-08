@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/state/store";
 import { Section, Segmented, SliderField, Toggle, ColorField } from "./ui/Controls";
 import { Icon } from "./ui/Icon";
@@ -13,158 +14,180 @@ export function StyleControls() {
   const relief = useStore((s) => s.relief);
   const setRelief = useStore((s) => s.setRelief);
 
+  // Style options auto-collapse when the user clicks away, and reopen when a
+  // style button is pressed — so idle sliders don't clutter the panel.
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!optionsOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOptionsOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [optionsOpen]);
+
   return (
     <Section icon="sliders" title="Style">
-      <Segmented<RenderMode>
-        value={renderMode}
-        onChange={setRenderMode}
-        options={[
-          { value: "square", label: <Icon name="square" size={16} />, title: "Square" },
-          { value: "dot", label: <Icon name="circle" size={16} />, title: "Dot" },
-          { value: "relief", label: <Icon name="cube" size={16} />, title: "Relief" },
-        ]}
-      />
-
-      {renderMode === "square" && (
-        <>
-          <SliderField
-            label="Gap"
-            value={square.tileGapPx}
-            min={0}
-            max={24}
-            suffix="px"
-            onChange={(tileGapPx) => setSquare({ tileGapPx })}
-          />
-          <SliderField
-            label="Rounded"
-            value={square.roundedCornersPx}
-            min={0}
-            max={40}
-            suffix="px"
-            onChange={(roundedCornersPx) => setSquare({ roundedCornersPx })}
-          />
-          <Toggle
-            label="Outline"
-            checked={square.outline}
-            onChange={(outline) => setSquare({ outline })}
-          />
-          {square.outline && (
-            <ColorField
-              label="Outline color"
-              value={square.outlineColor}
-              onChange={(outlineColor) => setSquare({ outlineColor })}
-            />
-          )}
-        </>
-      )}
-
-      {renderMode === "dot" && (
-        <>
-          <Segmented<DotShape>
-            value={dot.dotShape}
-            onChange={(dotShape) => setDot({ dotShape })}
+      <div ref={ref}>
+        <div onPointerDown={() => setOptionsOpen(true)}>
+          <Segmented<RenderMode>
+            value={renderMode}
+            onChange={setRenderMode}
             options={[
-              { value: "circle", label: <Icon name="circle" size={15} />, title: "Circle" },
-              { value: "square", label: <Icon name="square" size={15} />, title: "Square" },
-              { value: "diamond", label: <Icon name="diamond" size={15} />, title: "Diamond" },
+              { value: "square", label: <Icon name="square" size={16} />, title: "Square" },
+              { value: "dot", label: <Icon name="circle" size={16} />, title: "Dot" },
+              { value: "relief", label: <Icon name="cube" size={16} />, title: "Relief" },
             ]}
           />
-          <SliderField
-            label="Max dot"
-            value={Number(dot.maxDotScale.toFixed(2))}
-            min={0.2}
-            max={1.4}
-            step={0.05}
-            onChange={(maxDotScale) => setDot({ maxDotScale })}
-          />
-          <SliderField
-            label="Min dot"
-            value={Number(dot.minDotScale.toFixed(2))}
-            min={0}
-            max={0.8}
-            step={0.05}
-            onChange={(minDotScale) => setDot({ minDotScale })}
-          />
-          <Toggle
-            label="Invert (light = big)"
-            checked={dot.invert}
-            onChange={(invert) => setDot({ invert })}
-          />
-        </>
-      )}
+        </div>
 
-      {renderMode === "relief" && (
-        <>
-          <Segmented<ReliefVariant>
-            value={relief.variant}
-            onChange={(variant) => setRelief({ variant })}
-            options={[
-              { value: "height", label: "Raised" },
-              { value: "size", label: "Size" },
-              { value: "iso", label: "Iso" },
-            ]}
-          />
+        <div className={`style-opts${optionsOpen ? " is-open" : ""}`}>
+          <div className="style-opts__inner">
+            {renderMode === "square" && (
+              <>
+                <SliderField
+                  label="Gap"
+                  value={square.tileGapPx}
+                  min={0}
+                  max={24}
+                  suffix="px"
+                  onChange={(tileGapPx) => setSquare({ tileGapPx })}
+                />
+                <SliderField
+                  label="Rounded"
+                  value={square.roundedCornersPx}
+                  min={0}
+                  max={40}
+                  suffix="px"
+                  onChange={(roundedCornersPx) => setSquare({ roundedCornersPx })}
+                />
+                <Toggle
+                  label="Outline"
+                  checked={square.outline}
+                  onChange={(outline) => setSquare({ outline })}
+                />
+                {square.outline && (
+                  <ColorField
+                    label="Outline color"
+                    value={square.outlineColor}
+                    onChange={(outlineColor) => setSquare({ outlineColor })}
+                  />
+                )}
+              </>
+            )}
 
-          {relief.variant === "size" && (
-            <>
-              <SliderField
-                label="Min size"
-                value={Number(relief.minScale.toFixed(2))}
-                min={0.1}
-                max={1}
-                step={0.05}
-                onChange={(minScale) => setRelief({ minScale })}
-              />
-              <SliderField
-                label="Max size"
-                value={Number(relief.maxScale.toFixed(2))}
-                min={0.5}
-                max={1.4}
-                step={0.05}
-                onChange={(maxScale) => setRelief({ maxScale })}
-              />
-              <SliderField
-                label="Shadow"
-                value={relief.shadowBlur}
-                min={0}
-                max={40}
-                onChange={(shadowBlur) => setRelief({ shadowBlur })}
-              />
-            </>
-          )}
+            {renderMode === "dot" && (
+              <>
+                <Segmented<DotShape>
+                  value={dot.dotShape}
+                  onChange={(dotShape) => setDot({ dotShape })}
+                  options={[
+                    { value: "circle", label: <Icon name="circle" size={15} />, title: "Circle" },
+                    { value: "square", label: <Icon name="square" size={15} />, title: "Square" },
+                    { value: "diamond", label: <Icon name="diamond" size={15} />, title: "Diamond" },
+                  ]}
+                />
+                <SliderField
+                  label="Max dot"
+                  value={Number(dot.maxDotScale.toFixed(2))}
+                  min={0.2}
+                  max={1.4}
+                  step={0.05}
+                  onChange={(maxDotScale) => setDot({ maxDotScale })}
+                />
+                <SliderField
+                  label="Min dot"
+                  value={Number(dot.minDotScale.toFixed(2))}
+                  min={0}
+                  max={0.8}
+                  step={0.05}
+                  onChange={(minDotScale) => setDot({ minDotScale })}
+                />
+                <Toggle
+                  label="Invert (light = big)"
+                  checked={dot.invert}
+                  onChange={(invert) => setDot({ invert })}
+                />
+              </>
+            )}
 
-          {relief.variant === "height" && (
-            <>
-              <SliderField
-                label="Height"
-                value={Number(relief.heightScale.toFixed(2))}
-                min={0}
-                max={3}
-                step={0.05}
-                onChange={(heightScale) => setRelief({ heightScale })}
-              />
-              <SliderField
-                label="Shadow"
-                value={relief.shadowBlur}
-                min={0}
-                max={40}
-                onChange={(shadowBlur) => setRelief({ shadowBlur })}
-              />
-            </>
-          )}
+            {renderMode === "relief" && (
+              <>
+                <Segmented<ReliefVariant>
+                  value={relief.variant}
+                  onChange={(variant) => setRelief({ variant })}
+                  options={[
+                    { value: "height", label: "Raised" },
+                    { value: "size", label: "Size" },
+                    { value: "iso", label: "Iso" },
+                  ]}
+                />
 
-          {relief.variant === "iso" && (
-            <SliderField
-              label="Height"
-              value={Number(relief.heightScale.toFixed(2))}
-              min={0}
-              max={3}
-              step={0.05}
-              onChange={(heightScale) => setRelief({ heightScale })}
-            />
-          )}
-        </>
-      )}
+                {relief.variant === "size" && (
+                  <>
+                    <SliderField
+                      label="Min size"
+                      value={Number(relief.minScale.toFixed(2))}
+                      min={0.1}
+                      max={1}
+                      step={0.05}
+                      onChange={(minScale) => setRelief({ minScale })}
+                    />
+                    <SliderField
+                      label="Max size"
+                      value={Number(relief.maxScale.toFixed(2))}
+                      min={0.5}
+                      max={1.4}
+                      step={0.05}
+                      onChange={(maxScale) => setRelief({ maxScale })}
+                    />
+                    <SliderField
+                      label="Shadow"
+                      value={relief.shadowBlur}
+                      min={0}
+                      max={40}
+                      onChange={(shadowBlur) => setRelief({ shadowBlur })}
+                    />
+                  </>
+                )}
+
+                {relief.variant === "height" && (
+                  <>
+                    <SliderField
+                      label="Height"
+                      value={Number(relief.heightScale.toFixed(2))}
+                      min={0}
+                      max={3}
+                      step={0.05}
+                      onChange={(heightScale) => setRelief({ heightScale })}
+                    />
+                    <SliderField
+                      label="Shadow"
+                      value={relief.shadowBlur}
+                      min={0}
+                      max={40}
+                      onChange={(shadowBlur) => setRelief({ shadowBlur })}
+                    />
+                  </>
+                )}
+
+                {relief.variant === "iso" && (
+                  <SliderField
+                    label="Height"
+                    value={Number(relief.heightScale.toFixed(2))}
+                    min={0}
+                    max={3}
+                    step={0.05}
+                    onChange={(heightScale) => setRelief({ heightScale })}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </Section>
   );
 }

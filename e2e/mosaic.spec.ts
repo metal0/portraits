@@ -205,8 +205,10 @@ test("exports a PNG download", async ({ page }) => {
   await page.goto("/");
   await upload(page);
 
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const dialog = page.getByRole("dialog");
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: /Download PNG/ }).click();
+  await dialog.getByRole("button", { name: /PNG/ }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/\.png$/);
 });
@@ -215,8 +217,9 @@ test("exports an SVG with vector shapes", async ({ page }) => {
   await page.goto("/");
   await upload(page);
 
+  await page.getByRole("button", { name: "Export", exact: true }).click();
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: /Download SVG/ }).click();
+  await page.getByRole("dialog").getByRole("button", { name: /SVG/ }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/\.svg$/);
 

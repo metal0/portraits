@@ -151,52 +151,54 @@ export function DisplayControls() {
         }}
       />
 
-      <SliderField
-        label="Shown at"
-        value={grid.displaySizePx}
-        min={16}
-        max={128}
-        suffix="px"
-        onChange={(displaySizePx) => setGrid({ displaySizePx })}
-      />
-      <SliderField
-        label="Block target"
-        value={grid.targetBlockScreenPx}
-        min={1}
-        max={3}
-        step={0.25}
-        suffix="px"
-        onChange={(targetBlockScreenPx) => setGrid({ targetBlockScreenPx })}
-      />
-
-      <div className="grid-summary">
-        <span>
-          Recommended grid <strong>{recommended}×{recommended}</strong>
-        </span>
-        <label className="grid-override">
-          <input
-            type="checkbox"
-            checked={grid.gridOverride !== null}
-            onChange={(e) => setGrid({ gridOverride: e.target.checked ? recommended : null })}
-          />
-          Override
-        </label>
-      </div>
-
-      {grid.gridOverride !== null && (
+      <Section icon="sliders" title="Customize" collapsible defaultCollapsed>
         <SliderField
-          label="Grid"
-          value={grid.gridOverride}
-          min={GRID_MIN}
-          max={GRID_MAX}
-          suffix={`×${grid.gridOverride}`}
-          onChange={(gridOverride) => setGrid({ gridOverride })}
+          label="Shown at"
+          value={grid.displaySizePx}
+          min={16}
+          max={128}
+          suffix="px"
+          onChange={(displaySizePx) => setGrid({ displaySizePx })}
         />
-      )}
+        <SliderField
+          label="Block target"
+          value={grid.targetBlockScreenPx}
+          min={1}
+          max={3}
+          step={0.25}
+          suffix="px"
+          onChange={(targetBlockScreenPx) => setGrid({ targetBlockScreenPx })}
+        />
 
-      <p className="grid-effective">
-        Active: {effectiveGrid}×{effectiveGrid} blocks
-      </p>
+        <div className="grid-summary">
+          <span>
+            Recommended grid <strong>{recommended}×{recommended}</strong>
+          </span>
+          <label className="grid-override">
+            <input
+              type="checkbox"
+              checked={grid.gridOverride !== null}
+              onChange={(e) => setGrid({ gridOverride: e.target.checked ? recommended : null })}
+            />
+            Override
+          </label>
+        </div>
+
+        {grid.gridOverride !== null && (
+          <SliderField
+            label="Grid"
+            value={grid.gridOverride}
+            min={GRID_MIN}
+            max={GRID_MAX}
+            suffix={`×${grid.gridOverride}`}
+            onChange={(gridOverride) => setGrid({ gridOverride })}
+          />
+        )}
+
+        <p className="grid-effective">
+          Active: {effectiveGrid}×{effectiveGrid} blocks
+        </p>
+      </Section>
     </Section>
   );
 }
