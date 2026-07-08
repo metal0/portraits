@@ -7,15 +7,19 @@ function rgb(r: number, g: number, b: number): string {
 }
 
 function squareCells(sample: SampledGrid, req: RenderRequest, cellSize: number): string {
-  const { tileGapPx, roundedCornersPx, outline, outlineColor } = req.square;
+  const { gap, cornerRadius, outline, outlineColor } = req.square;
+  const gapPx = Math.round(gap * cellSize);
+  const halfGap = Math.floor(gapPx / 2);
+  const size = cellSize - gapPx;
+  if (size <= 0) return "";
+  const radius = Math.min(cornerRadius * size, size / 2);
+  const rx = radius > 0 ? ` rx="${radius.toFixed(2)}"` : "";
+
   const parts: string[] = [];
   for (const cell of sample.cells) {
     if (cell.a < ALPHA_CUTOFF) continue;
-    const size = cellSize - tileGapPx;
-    if (size <= 0) continue;
-    const x = cell.gx * cellSize + tileGapPx / 2;
-    const y = cell.gy * cellSize + tileGapPx / 2;
-    const rx = roundedCornersPx > 0 ? ` rx="${Math.min(roundedCornersPx, size / 2)}"` : "";
+    const x = cell.gx * cellSize + halfGap;
+    const y = cell.gy * cellSize + halfGap;
     const stroke = outline ? ` stroke="${outlineColor}" stroke-width="${cellSize * 0.04}"` : "";
     parts.push(
       `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${size.toFixed(2)}" height="${size.toFixed(2)}"${rx} fill="${rgb(cell.r, cell.g, cell.b)}"${stroke}/>`,

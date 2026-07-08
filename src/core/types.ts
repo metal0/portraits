@@ -42,8 +42,10 @@ export interface GridSettings {
 }
 
 export interface SquareOptions {
-  tileGapPx: number;
-  roundedCornersPx: number;
+  /** Gap between tiles as a fraction of the cell (0..0.45). */
+  gap: number;
+  /** Corner radius as a fraction of the tile (0..0.5). */
+  cornerRadius: number;
   outline: boolean;
   outlineColor: string;
 }

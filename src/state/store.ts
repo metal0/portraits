@@ -13,7 +13,7 @@ import type {
   RenderMode,
   SquareOptions,
 } from "@/core/types";
-import { recommendGrid } from "@/core/grid";
+import { recommendGrid, planRender, type RenderPlan } from "@/core/grid";
 import { NEUTRAL_ADJUST } from "@/core/adjust";
 
 interface AppState {
@@ -60,8 +60,10 @@ interface AppState {
   applyPreset: (id: string) => void;
   importPresets: (presets: CustomPreset[]) => void;
 
-  /** Effective grid size: manual override if set, else recommended. */
+  /** Effective grid size: manual override if set, else style-aware recommend. */
   effectiveGrid: () => number;
+  /** Resolved render geometry (aligned output size, integer block px). */
+  effectivePlan: () => RenderPlan;
 }
 
 function snapshot(s: AppState): PresetConfig {
@@ -103,8 +105,8 @@ export const useStore = create<AppState>()(
   renderMode: "square",
 
   square: {
-    tileGapPx: 0,
-    roundedCornersPx: 0,
+    gap: 0,
+    cornerRadius: 0,
     outline: false,
     outlineColor: "#000000",
   },
@@ -185,8 +187,18 @@ export const useStore = create<AppState>()(
     set((s) => ({ presets: [...s.presets, ...list.map((p) => ({ ...p, id: newId() }))] })),
 
       effectiveGrid: () => {
-        const { grid } = get();
-        return grid.gridOverride ?? recommendGrid(grid.displaySizePx, grid.targetBlockScreenPx);
+        const { grid, renderMode, square } = get();
+        if (grid.gridOverride !== null) return grid.gridOverride;
+        // Styles with sub-block detail (dots, relief, gaps) need coarser blocks
+        // to survive being shrunk — bias the target accordingly.
+        let target = grid.targetBlockScreenPx;
+        if (renderMode === "dot" || renderMode === "relief") target *= 1.4;
+        else if (square.gap > 0) target *= 1 + square.gap;
+        return recommendGrid(grid.displaySizePx, target);
+      },
+      effectivePlan: () => {
+        const s = get();
+        return planRender(s.effectiveGrid(), s.grid.displaySizePx, s.grid.outputSizePx);
       },
     }),
     {

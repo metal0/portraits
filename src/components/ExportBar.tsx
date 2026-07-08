@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
 import { currentRequest } from "@/render/buildRequest";
@@ -24,7 +25,8 @@ export function ExportBar() {
   const setExport = useStore((s) => s.setExport);
   const hasImage = useStore((s) => s.source !== null);
   const sourceName = useStore((s) => s.sourceName);
-  const gridSize = useStore((s) => s.effectiveGrid());
+  const plan = useStore(useShallow((s) => s.effectivePlan()));
+  const gridSize = plan.gridSize;
   const renderMode = useStore((s) => s.renderMode);
   const pending = useStore((s) => s.renderPending);
 
@@ -40,7 +42,7 @@ export function ExportBar() {
   };
 
   const downloadPng = () => {
-    const canvas = getOutputCanvas(grid.outputSizePx);
+    const canvas = getOutputCanvas(plan.outputPx);
     canvas.toBlob((blob) => {
       if (blob) saveBlob(blob, "png");
     }, "image/png");
@@ -73,6 +75,10 @@ export function ExportBar() {
               onChange={(v) => setGrid({ outputSizePx: Number(v) })}
               options={OUTPUT_SIZES.map((s) => ({ value: String(s), label: `${s}` }))}
             />
+            <p className="modal__note">
+              Exports at {plan.outputPx}×{plan.outputPx} ({plan.gridSize}×{plan.gridSize} blocks ·{" "}
+              {plan.blockPx}px each) — snapped so blocks stay crisp.
+            </p>
           </Section>
 
           <Section icon="crop" title="Shape & background">
@@ -103,7 +109,7 @@ export function ExportBar() {
               disabled={pending}
             >
               <Icon name={pending ? "sparkles" : "download"} size={15} />
-              {pending ? "Rendering…" : `PNG · ${grid.outputSizePx}²`}
+              {pending ? "Rendering…" : `PNG · ${plan.outputPx}²`}
             </button>
             <button
               type="button"

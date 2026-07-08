@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
-import { recommendGrid, blockSize } from "@/core/grid";
 import { ComparePreviews } from "./ComparePreviews";
 
 const PREVIEW_MAX = 512;
@@ -12,9 +12,9 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
 
   const source = useStore((s) => s.source);
   const renderVersion = useStore((s) => s.renderVersion);
-  const outputSize = useStore((s) => s.grid.outputSizePx);
-  const grid = useStore((s) => s.grid);
-  const effectiveGrid = useStore((s) => s.effectiveGrid());
+  const plan = useStore(useShallow((s) => s.effectivePlan()));
+  const outputSize = plan.outputPx;
+  const displayPx = useStore((s) => s.grid.displaySizePx);
   const transparent = useStore((s) => s.exportSettings.transparentBackground);
   const pending = useStore((s) => s.renderPending);
 
@@ -69,12 +69,12 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
       ) : (
         <div className="stage__empty">
           <div className="stage__grid-readout">
-            <Readout value={`${effectiveGrid}×${effectiveGrid}`} label="grid" />
-            <Readout value={`${Math.round(blockSize(grid.outputSizePx, effectiveGrid))}px`} label={`per block @ ${grid.outputSizePx}`} />
+            <Readout value={`${plan.gridSize}×${plan.gridSize}`} label="grid" />
             <Readout
-              value={`${recommendGrid(grid.displaySizePx, grid.targetBlockScreenPx)}²`}
-              label="recommended"
+              value={`${plan.blockScreenPx.toFixed(plan.blockScreenPx % 1 ? 1 : 0)}px`}
+              label={`per block @ ${displayPx}px`}
             />
+            <Readout value={`${plan.outputPx}²`} label="export" />
           </div>
           <p className="stage__hint">Upload, drop, or paste a photo to begin.</p>
         </div>

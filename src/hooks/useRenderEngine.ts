@@ -14,8 +14,8 @@ const DEBOUNCE_MS = 1000;
 export function useRenderEngine(): void {
   const source = useStore((s) => s.source);
   const crop = useStore((s) => s.crop);
-  const grid = useStore((s) => s.grid);
   const gridSize = useStore((s) => s.effectiveGrid());
+  const outputPx = useStore((s) => s.effectivePlan().outputPx);
   const renderMode = useStore((s) => s.renderMode);
   const square = useStore((s) => s.square);
   const dot = useStore((s) => s.dot);
@@ -42,7 +42,7 @@ export function useRenderEngine(): void {
       const req: RenderRequest = {
         crop,
         gridSize,
-        outputSizePx: grid.outputSizePx,
+        outputSizePx: outputPx,
         renderMode,
         square,
         dot,
@@ -61,7 +61,7 @@ export function useRenderEngine(): void {
     source,
     crop,
     gridSize,
-    grid.outputSizePx,
+    outputPx,
     renderMode,
     square,
     dot,

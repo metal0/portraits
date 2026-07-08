@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/state/store";
 import { DISPLAY_PRESETS, GRID_MAX, GRID_MIN, recommendGrid } from "@/core/grid";
 import { buildPresetsFile, parsePresetsFile } from "@/core/presets";
@@ -23,7 +24,7 @@ const PRESET_ICON: Record<string, IconName> = {
 export function DisplayControls() {
   const grid = useStore((s) => s.grid);
   const setGrid = useStore((s) => s.setGrid);
-  const effectiveGrid = useStore((s) => s.effectiveGrid());
+  const plan = useStore(useShallow((s) => s.effectivePlan()));
   const presets = useStore((s) => s.presets);
   const saveCurrentAsPreset = useStore((s) => s.saveCurrentAsPreset);
   const updatePreset = useStore((s) => s.updatePreset);
@@ -178,7 +179,7 @@ export function DisplayControls() {
             <input
               type="checkbox"
               checked={grid.gridOverride !== null}
-              onChange={(e) => setGrid({ gridOverride: e.target.checked ? recommended : null })}
+              onChange={(e) => setGrid({ gridOverride: e.target.checked ? plan.gridSize : null })}
             />
             Override
           </label>
@@ -196,7 +197,7 @@ export function DisplayControls() {
         )}
 
         <p className="grid-effective">
-          Active: {effectiveGrid}×{effectiveGrid} blocks
+          Active: {plan.gridSize}×{plan.gridSize} blocks · {plan.blockScreenPx.toFixed(plan.blockScreenPx % 1 ? 1 : 0)}px each on screen
         </p>
       </Section>
     </Section>

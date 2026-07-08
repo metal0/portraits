@@ -5,25 +5,29 @@ const ALPHA_CUTOFF = 8;
 
 export function renderSquare(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void {
   const cellSize = req.outputSizePx / sample.size;
-  const { tileGapPx, roundedCornersPx, outline, outlineColor } = req.square;
+  const { gap, cornerRadius, outline, outlineColor } = req.square;
+
+  // Integer, cell-relative gap keeps block edges on whole pixels (crisp).
+  const gapPx = Math.round(gap * cellSize);
+  const halfGap = Math.floor(gapPx / 2);
+  const size = cellSize - gapPx;
+  const radius = cornerRadius * size;
 
   ctx.lineWidth = Math.max(1, cellSize * 0.04);
+
+  if (size <= 0) return;
 
   for (const cell of sample.cells) {
     if (cell.a < ALPHA_CUTOFF) continue;
 
-    const { r, g, b } = cell;
-    const x = cell.gx * cellSize + tileGapPx / 2;
-    const y = cell.gy * cellSize + tileGapPx / 2;
-    const size = cellSize - tileGapPx;
-    if (size <= 0) continue;
+    const x = cell.gx * cellSize + halfGap;
+    const y = cell.gy * cellSize + halfGap;
 
-    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx.fillStyle = `rgb(${cell.r}, ${cell.g}, ${cell.b})`;
 
-    if (roundedCornersPx > 0) {
-      const radius = Math.min(roundedCornersPx, size / 2);
+    if (radius > 0) {
       ctx.beginPath();
-      ctx.roundRect(x, y, size, size, radius);
+      ctx.roundRect(x, y, size, size, Math.min(radius, size / 2));
       ctx.fill();
       if (outline) {
         ctx.strokeStyle = outlineColor;

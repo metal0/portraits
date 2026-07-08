@@ -49,19 +49,21 @@ export function StyleControls() {
               <>
                 <SliderField
                   label="Gap"
-                  value={square.tileGapPx}
+                  value={Math.round(square.gap * 100)}
                   min={0}
-                  max={24}
-                  suffix="px"
-                  onChange={(tileGapPx) => setSquare({ tileGapPx })}
+                  max={45}
+                  step={5}
+                  suffix="%"
+                  onChange={(v) => setSquare({ gap: v / 100 })}
                 />
                 <SliderField
                   label="Rounded"
-                  value={square.roundedCornersPx}
+                  value={Math.round(square.cornerRadius * 100)}
                   min={0}
-                  max={40}
-                  suffix="px"
-                  onChange={(roundedCornersPx) => setSquare({ roundedCornersPx })}
+                  max={50}
+                  step={5}
+                  suffix="%"
+                  onChange={(v) => setSquare({ cornerRadius: v / 100 })}
                 />
                 <Toggle
                   label="Outline"
