@@ -15,7 +15,7 @@ export function useRenderEngine(): void {
   const source = useStore((s) => s.source);
   const crop = useStore((s) => s.crop);
   const gridSize = useStore((s) => s.effectiveGrid());
-  const outputPx = useStore((s) => s.effectivePlan().outputPx);
+  const outputPx = useStore((s) => s.effectivePlan().previewPx);
   const renderMode = useStore((s) => s.renderMode);
   const square = useStore((s) => s.square);
   const dot = useStore((s) => s.dot);

@@ -1,10 +1,16 @@
 import { useStore } from "@/state/store";
+import { planRender } from "@/core/grid";
 import type { RenderRequest } from "@/core/types";
 
-/** Assemble the current RenderRequest from live store state. */
-export function currentRequest(): RenderRequest {
+/**
+ * Assemble a RenderRequest from live store state. Pass `requestedOutputPx` to
+ * target a specific export resolution (e.g. batch export); omit to use the
+ * selected output size.
+ */
+export function currentRequest(requestedOutputPx?: number): RenderRequest {
   const s = useStore.getState();
-  const plan = s.effectivePlan();
+  const grid = s.effectiveGrid();
+  const plan = planRender(grid, s.grid.displaySizePx, requestedOutputPx ?? s.grid.outputSizePx);
   return {
     crop: s.crop,
     gridSize: plan.gridSize,

@@ -31,7 +31,7 @@ export function ReadabilityMeter() {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.clearRect(0, 0, size, size);
-      ctx.drawImage(getOutputCanvas(st.effectivePlan().outputPx), 0, 0, size, size);
+      ctx.drawImage(getOutputCanvas(st.effectivePlan().previewPx), 0, 0, size, size);
       setRes(analyzeReadability(ctx.getImageData(0, 0, size, size).data, size));
     }, 450);
     return () => window.clearTimeout(id);

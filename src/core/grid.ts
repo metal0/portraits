@@ -36,12 +36,17 @@ export function recommendGrid(displaySizePx: number, targetBlockScreenPx: number
   return clamp(Math.round(raw), lo, hi);
 }
 
+/** Preview render is capped near this size (kept off the export resolution). */
+export const PREVIEW_CAP = 1024;
+
 export interface RenderPlan {
   gridSize: number;
   /** Integer output pixels per block — guarantees seam-free (crisp) blocks. */
   blockPx: number;
   /** Actual exported dimension (gridSize × blockPx), near the requested size. */
   outputPx: number;
+  /** Capped, integer-celled size used for the on-screen preview. */
+  previewPx: number;
   /** Screen pixels each block occupies at the display size. */
   blockScreenPx: number;
 }
@@ -50,6 +55,7 @@ export interface RenderPlan {
  * Resolve the actual render geometry. The output canvas is sized to an exact
  * multiple of the grid so each block is an integer number of pixels — no
  * fractional block seams, which is the main source of blur at non-1× targets.
+ * The preview is capped so a huge export resolution never bogs down editing.
  */
 export function planRender(
   gridSize: number,
@@ -57,10 +63,12 @@ export function planRender(
   requestedOutputPx: number,
 ): RenderPlan {
   const blockPx = Math.max(1, Math.round(requestedOutputPx / gridSize));
+  const previewBlockPx = Math.max(1, Math.min(blockPx, Math.floor(PREVIEW_CAP / gridSize) || 1));
   return {
     gridSize,
     blockPx,
     outputPx: gridSize * blockPx,
+    previewPx: gridSize * previewBlockPx,
     blockScreenPx: displaySizePx / gridSize,
   };
 }

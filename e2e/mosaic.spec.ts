@@ -284,3 +284,24 @@ test("exports an SVG with vector shapes", async ({ page }) => {
   expect(svg).toContain("<svg");
   expect(svg).toMatch(/<rect[^>]*fill="rgb\(/);
 });
+
+test("batch export downloads a zip", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("dialog").getByRole("button", { name: /Batch/ }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.zip$/);
+
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(chunk as Buffer);
+  const zip = Buffer.concat(chunks);
+  // Valid ZIP: local-file + end-of-central-directory signatures, 3 PNG entries.
+  expect(zip.subarray(0, 4)).toEqual(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+  expect(zip.includes(Buffer.from([0x50, 0x4b, 0x05, 0x06]))).toBe(true);
+  // 3 entries, each name in both the local header and the central directory.
+  expect(zip.toString("latin1").match(/\.png/g)?.length).toBe(6);
+});
