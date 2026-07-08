@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useStore } from "@/state/store";
 import type { Crop } from "@/core/types";
 import { clamp } from "@/core/grid";
+import { autoFrame } from "@/core/saliency";
 import { Icon } from "./ui/Icon";
 
 /** Crop square in source-pixel space. */
@@ -152,6 +153,8 @@ function CropEditor(props: {
     }));
   };
 
+  const autoFit = () => setBox(autoFrame(source));
+
   const apply = () =>
     props.onApply({ x: box.cx / w, y: box.cy / h, scale: minDim / box.s, rotation: 0 });
 
@@ -192,6 +195,10 @@ function CropEditor(props: {
             ))}
           </div>
         </div>
+
+        <button type="button" className="btn btn--ghost btn--icon crop__auto" onClick={autoFit}>
+          <Icon name="sparkles" size={14} /> Auto-frame
+        </button>
 
         <label className="crop__zoom field">
           <span className="field__label">

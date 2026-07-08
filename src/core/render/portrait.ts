@@ -6,6 +6,8 @@ import { applyColor } from "../colorize";
 import { renderSquare } from "./square";
 import { renderDot } from "./dot";
 import { renderRelief } from "./relief";
+import { renderAscii } from "./ascii";
+import { renderCmyk } from "./cmyk";
 
 /** Sample → adjust → colorize. Shared by canvas render and SVG export. */
 export function computeFrame(source: ImageBitmap, req: RenderRequest): SampledGrid {
@@ -40,6 +42,10 @@ export function renderPortrait(ctx: Ctx2D, source: ImageBitmap, req: RenderReque
     renderDot(ctx, sample, req);
   } else if (req.renderMode === "relief") {
     renderRelief(ctx, sample, req);
+  } else if (req.renderMode === "ascii") {
+    renderAscii(ctx, sample, req);
+  } else if (req.renderMode === "cmyk") {
+    renderCmyk(ctx, sample, req);
   } else {
     renderSquare(ctx, sample, req);
   }

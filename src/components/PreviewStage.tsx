@@ -3,6 +3,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
 import { ComparePreviews } from "./ComparePreviews";
+import { ReadabilityMeter } from "./ReadabilityMeter";
 
 const PREVIEW_MAX = 512;
 
@@ -13,7 +14,7 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
   const source = useStore((s) => s.source);
   const renderVersion = useStore((s) => s.renderVersion);
   const plan = useStore(useShallow((s) => s.effectivePlan()));
-  const outputSize = plan.outputPx;
+  const previewSize = plan.previewPx;
   const displayPx = useStore((s) => s.grid.displaySizePx);
   const transparent = useStore((s) => s.exportSettings.transparentBackground);
   const pending = useStore((s) => s.renderPending);
@@ -21,15 +22,15 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
   useEffect(() => {
     const dst = canvasRef.current;
     if (!dst || !source) return;
-    const out = getOutputCanvas(outputSize);
-    const displaySize = Math.min(PREVIEW_MAX, outputSize);
+    const out = getOutputCanvas(previewSize);
+    const displaySize = Math.min(PREVIEW_MAX, previewSize);
     if (dst.width !== displaySize) dst.width = displaySize;
     if (dst.height !== displaySize) dst.height = displaySize;
     const ctx = dst.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, displaySize, displaySize);
     ctx.drawImage(out, 0, 0, displaySize, displaySize);
-  }, [renderVersion, source, outputSize]);
+  }, [renderVersion, source, previewSize]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -52,7 +53,7 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
         <div className="stage__content">
           <div className="frame frame--preview">
             <span className="frame__legend">
-              Render · {outputSize}×{outputSize}
+              Render · {plan.outputPx}×{plan.outputPx}
             </span>
             <div className="stage__canvas-wrap">
               <canvas
@@ -64,6 +65,7 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
               {pending && <div className="stage__updating">Updating…</div>}
             </div>
           </div>
+          <ReadabilityMeter />
           <ComparePreviews />
         </div>
       ) : (

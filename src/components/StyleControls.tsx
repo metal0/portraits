@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/state/store";
 import { Section, Segmented, SliderField, Toggle, ColorField } from "./ui/Controls";
 import { Icon } from "./ui/Icon";
+import { ASCII_RAMPS } from "@/core/render/ascii";
 import type { DotShape, RenderMode, ReliefVariant } from "@/core/types";
 
 export function StyleControls() {
@@ -13,6 +14,8 @@ export function StyleControls() {
   const setDot = useStore((s) => s.setDot);
   const relief = useStore((s) => s.relief);
   const setRelief = useStore((s) => s.setRelief);
+  const ascii = useStore((s) => s.ascii);
+  const setAscii = useStore((s) => s.setAscii);
 
   // Style options auto-collapse ~5s after the user clicks away, and reopen when
   // a style button is pressed — so idle sliders don't clutter the panel. The
@@ -64,6 +67,8 @@ export function StyleControls() {
               { value: "square", label: <Icon name="square" size={16} />, title: "Square" },
               { value: "dot", label: <Icon name="circle" size={16} />, title: "Dot" },
               { value: "relief", label: <Icon name="cube" size={16} />, title: "Relief" },
+              { value: "ascii", label: <Icon name="type" size={16} />, title: "ASCII" },
+              { value: "cmyk", label: <Icon name="circleDot" size={16} />, title: "CMYK" },
             ]}
           />
         </div>
@@ -211,6 +216,21 @@ export function StyleControls() {
                   />
                 )}
               </>
+            )}
+
+            {renderMode === "ascii" && (
+              <div className="field">
+                <span className="field__label">Character set</span>
+                <Segmented<string>
+                  value={ascii.ramp}
+                  onChange={(ramp) => setAscii({ ramp })}
+                  options={ASCII_RAMPS.map((r) => ({ value: r.ramp, label: r.name }))}
+                />
+              </div>
+            )}
+
+            {renderMode === "cmyk" && (
+              <p className="field__label">Four-color halftone screen — looks best in full-color.</p>
             )}
           </div>
         </div>

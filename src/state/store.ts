@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   AdjustSettings,
+  AsciiOptions,
   ColorSettings,
   Crop,
   CustomPreset,
@@ -27,6 +28,7 @@ interface AppState {
   square: SquareOptions;
   dot: DotOptions;
   relief: ReliefOptions;
+  ascii: AsciiOptions;
   color: ColorSettings;
   adjust: AdjustSettings;
   exportSettings: ExportSettings;
@@ -46,6 +48,7 @@ interface AppState {
   setSquare: (patch: Partial<SquareOptions>) => void;
   setDot: (patch: Partial<DotOptions>) => void;
   setRelief: (patch: Partial<ReliefOptions>) => void;
+  setAscii: (patch: Partial<AsciiOptions>) => void;
   setColor: (patch: Partial<ColorSettings>) => void;
   setAdjust: (patch: Partial<AdjustSettings>) => void;
   setExport: (patch: Partial<ExportSettings>) => void;
@@ -78,6 +81,7 @@ function snapshot(s: AppState): PresetConfig {
     square: { ...s.square },
     dot: { ...s.dot },
     relief: { ...s.relief },
+    ascii: { ...s.ascii },
     color: { ...s.color, customPalette: [...s.color.customPalette] },
     adjust: { ...s.adjust },
     exportSettings: { ...s.exportSettings },
@@ -129,6 +133,7 @@ export const useStore = create<AppState>()(
     shadowOffset: 6,
     heightScale: 0.6,
   },
+  ascii: { ramp: "@%#*+=-:. " },
   color: {
     mode: "full-color",
     threshold: 0.5,
@@ -153,6 +158,7 @@ export const useStore = create<AppState>()(
   setSquare: (patch) => set((s) => ({ square: { ...s.square, ...patch } })),
   setDot: (patch) => set((s) => ({ dot: { ...s.dot, ...patch } })),
   setRelief: (patch) => set((s) => ({ relief: { ...s.relief, ...patch } })),
+  setAscii: (patch) => set((s) => ({ ascii: { ...s.ascii, ...patch } })),
   setColor: (patch) => set((s) => ({ color: { ...s.color, ...patch } })),
   setAdjust: (patch) => set((s) => ({ adjust: { ...s.adjust, ...patch } })),
   setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
@@ -187,6 +193,7 @@ export const useStore = create<AppState>()(
       square: { ...c.square },
       dot: { ...c.dot },
       relief: { ...c.relief },
+      ascii: c.ascii ? { ...c.ascii } : { ramp: "@%#*+=-:. " },
       color: { ...c.color, customPalette: [...c.color.customPalette] },
       adjust: { ...c.adjust },
       exportSettings: { ...c.exportSettings },

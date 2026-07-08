@@ -11,7 +11,7 @@ const SIZES = [16, 32, 64, 128] as const;
 export function ComparePreviews() {
   const source = useStore((s) => s.source);
   const renderVersion = useStore((s) => s.renderVersion);
-  const outputSize = useStore((s) => s.effectivePlan().outputPx);
+  const outputSize = useStore((s) => s.effectivePlan().previewPx);
   const crop = useStore((s) => s.crop);
   const [pixelated, setPixelated] = useState(false);
 

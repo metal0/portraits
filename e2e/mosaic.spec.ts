@@ -60,6 +60,11 @@ test("renders and stays interactive", async ({ page }) => {
 
   // Profile-size preview strip is populated.
   await expect(page.locator(".preview-mosaic")).toHaveCount(4);
+
+  // Readability meter renders a verdict.
+  await expect(page.locator(".meter__verdict")).toHaveText(
+    /Readable|Borderline|Too detailed|Too abstract/,
+  );
 });
 
 test("switching render mode re-renders", async ({ page }) => {
@@ -106,6 +111,19 @@ test("crop zoom changes the output", async ({ page }) => {
   await expect
     .poll(async () => (await canvasStats(page)).variance)
     .not.toBe(before.variance);
+});
+
+test("auto-frame repositions the crop", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+  await page.getByRole("button", { name: "Recrop" }).click();
+
+  const box = page.locator(".crop__box");
+  const before = (await box.boundingBox())!;
+  await page.getByRole("button", { name: /Auto-frame/ }).click();
+  const after = (await box.boundingBox())!;
+  // It should tighten onto the salient region (the synthetic face is centered).
+  expect(before.width - after.width).toBeGreaterThan(5);
 });
 
 test("crop edge handle resizes the selection", async ({ page }) => {
@@ -176,10 +194,25 @@ test("dithering changes the pixel layout", async ({ page }) => {
   await page.getByRole("tab", { name: "B/W" }).click();
   const flat = await canvasStats(page);
 
-  await page.getByText(/Floyd.*dither/i).click();
+  await page.getByRole("tab", { name: "Bayer" }).click();
   await expect
     .poll(async () => (await canvasStats(page)).variance)
     .not.toBe(flat.variance);
+});
+
+test("ascii and cmyk modes render", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+
+  await page.getByRole("tab", { name: "ASCII" }).click();
+  await expect
+    .poll(async () => (await canvasStats(page)).variance, { timeout: 5000 })
+    .toBeGreaterThan(15);
+
+  await page.getByRole("tab", { name: "CMYK" }).click();
+  await expect
+    .poll(async () => (await canvasStats(page)).distinct, { timeout: 5000 })
+    .toBeGreaterThan(10);
 });
 
 test("relief mode renders all variants", async ({ page }) => {
@@ -250,4 +283,25 @@ test("exports an SVG with vector shapes", async ({ page }) => {
   const svg = Buffer.concat(chunks).toString("utf8");
   expect(svg).toContain("<svg");
   expect(svg).toMatch(/<rect[^>]*fill="rgb\(/);
+});
+
+test("batch export downloads a zip", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("dialog").getByRole("button", { name: /Batch/ }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.zip$/);
+
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(chunk as Buffer);
+  const zip = Buffer.concat(chunks);
+  // Valid ZIP: local-file + end-of-central-directory signatures, 3 PNG entries.
+  expect(zip.subarray(0, 4)).toEqual(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+  expect(zip.includes(Buffer.from([0x50, 0x4b, 0x05, 0x06]))).toBe(true);
+  // 3 entries, each name in both the local header and the central directory.
+  expect(zip.toString("latin1").match(/\.png/g)?.length).toBe(6);
 });
