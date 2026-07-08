@@ -113,6 +113,19 @@ test("crop zoom changes the output", async ({ page }) => {
     .not.toBe(before.variance);
 });
 
+test("auto-frame repositions the crop", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+  await page.getByRole("button", { name: "Recrop" }).click();
+
+  const box = page.locator(".crop__box");
+  const before = (await box.boundingBox())!;
+  await page.getByRole("button", { name: /Auto-frame/ }).click();
+  const after = (await box.boundingBox())!;
+  // It should tighten onto the salient region (the synthetic face is centered).
+  expect(before.width - after.width).toBeGreaterThan(5);
+});
+
 test("crop edge handle resizes the selection", async ({ page }) => {
   await page.goto("/");
   await upload(page);

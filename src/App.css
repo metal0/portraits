@@ -944,8 +944,12 @@ input[type="range"] {
 .crop__handle--sw {
   cursor: nesw-resize;
 }
-.crop__zoom {
+.crop__auto {
+  align-self: flex-start;
   margin-top: var(--space-2);
+}
+.crop__zoom {
+  margin-top: var(--space-1);
 }
 @keyframes fade-in {
   from {
