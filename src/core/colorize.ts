@@ -3,6 +3,7 @@ import { hexToRgb, type RGB } from "./graphics";
 import { luminance } from "./luma";
 import { quantize, nearestColor } from "./color";
 import { medianCut } from "./palette";
+import { toOklab, type Oklab } from "./oklab";
 
 const BW: RGB[] = [
   [0, 0, 0],
@@ -31,19 +32,21 @@ function dithers(color: ColorSettings): boolean {
  */
 export function applyColor(sample: SampledGrid, color: ColorSettings): SampledGrid {
   const palette = buildPalette(sample, color);
+  const paletteLab = palette ? toOklab(palette) : undefined;
 
   if (!dithers(color)) {
     const cells = sample.cells.map((c) => {
-      const [r, g, b] = quantize(c.r, c.g, c.b, c.luma, color, palette);
+      const [r, g, b] = quantize(c.r, c.g, c.b, c.luma, color, palette, paletteLab);
       return { ...c, r, g, b };
     });
     return { size: sample.size, cells };
   }
 
-  return floydSteinberg(sample, color, color.mode === "palette" ? palette ?? BW : BW);
+  const dPalette = color.mode === "palette" ? palette ?? BW : BW;
+  return floydSteinberg(sample, dPalette, color.mode === "palette" ? paletteLab : undefined);
 }
 
-function floydSteinberg(sample: SampledGrid, _color: ColorSettings, palette: RGB[]): SampledGrid {
+function floydSteinberg(sample: SampledGrid, palette: RGB[], paletteLab?: Oklab[]): SampledGrid {
   const { size, cells } = sample;
   const rf = Float32Array.from(cells, (c) => c.r);
   const gf = Float32Array.from(cells, (c) => c.g);
@@ -66,7 +69,7 @@ function floydSteinberg(sample: SampledGrid, _color: ColorSettings, palette: RGB
       const r = Math.max(0, Math.min(255, rf[i]));
       const g = Math.max(0, Math.min(255, gf[i]));
       const b = Math.max(0, Math.min(255, bf[i]));
-      const [nr, ng, nb] = nearestColor(r, g, b, palette);
+      const [nr, ng, nb] = nearestColor(r, g, b, palette, paletteLab);
       out[i] = { ...cells[i], r: nr, g: ng, b: nb, luma: luminance(nr, ng, nb) };
 
       const er = r - nr;

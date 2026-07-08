@@ -1,9 +1,36 @@
 import type { ColorSettings } from "./types";
 import { hexToRgb, lerp, type RGB } from "./graphics";
+import { rgbToOklab, type Oklab } from "./oklab";
 
-export function nearestColor(r: number, g: number, b: number, palette: RGB[]): RGB {
+/**
+ * Nearest palette color. When `paletteLab` (the palette in OKLab) is supplied,
+ * matches in perceptual OKLab space for far better results than raw RGB.
+ */
+export function nearestColor(
+  r: number,
+  g: number,
+  b: number,
+  palette: RGB[],
+  paletteLab?: Oklab[],
+): RGB {
   let best = palette[0] ?? [0, 0, 0];
   let bestDist = Infinity;
+
+  if (paletteLab) {
+    const [L, A, B] = rgbToOklab(r, g, b);
+    for (let i = 0; i < palette.length; i++) {
+      const dl = L - paletteLab[i][0];
+      const da = A - paletteLab[i][1];
+      const db = B - paletteLab[i][2];
+      const dist = dl * dl + da * da + db * db;
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = palette[i];
+      }
+    }
+    return best;
+  }
+
   for (const p of palette) {
     const dr = r - p[0];
     const dg = g - p[1];
@@ -29,6 +56,7 @@ export function quantize(
   luma: number,
   color: ColorSettings,
   palette: RGB[] | null,
+  paletteLab?: Oklab[],
 ): RGB {
   switch (color.mode) {
     case "grayscale": {
@@ -47,7 +75,7 @@ export function quantize(
       ];
     }
     case "palette":
-      return palette && palette.length > 0 ? nearestColor(r, g, b, palette) : [r, g, b];
+      return palette && palette.length > 0 ? nearestColor(r, g, b, palette, paletteLab) : [r, g, b];
     case "full-color":
     default:
       return [r, g, b];
