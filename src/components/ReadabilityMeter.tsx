@@ -14,21 +14,28 @@ const SLUG: Record<ReadabilityVerdict, string> = {
 export function ReadabilityMeter() {
   const source = useStore((s) => s.source);
   const renderVersion = useStore((s) => s.renderVersion);
-  const outputPx = useStore((s) => s.effectivePlan().outputPx);
   const displayPx = useStore((s) => s.grid.displaySizePx);
   const [res, setRes] = useState<ReadabilityResult | null>(null);
 
+  // Debounced + driven off completed renders only: reads the settled canvas so
+  // preset changes don't flash transient verdicts computed from a stale frame.
   useEffect(() => {
-    if (!source) return;
-    const size = Math.max(16, Math.min(128, Math.round(displayPx)));
-    const { ctx } = makeCanvas(size, size);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.clearRect(0, 0, size, size);
-    ctx.drawImage(getOutputCanvas(outputPx), 0, 0, size, size);
-    const { data } = ctx.getImageData(0, 0, size, size);
-    setRes(analyzeReadability(data, size));
-  }, [renderVersion, source, outputPx, displayPx]);
+    if (!source) {
+      setRes(null);
+      return;
+    }
+    const id = window.setTimeout(() => {
+      const st = useStore.getState();
+      const size = Math.max(16, Math.min(128, Math.round(st.grid.displaySizePx)));
+      const { ctx } = makeCanvas(size, size);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.clearRect(0, 0, size, size);
+      ctx.drawImage(getOutputCanvas(st.effectivePlan().outputPx), 0, 0, size, size);
+      setRes(analyzeReadability(ctx.getImageData(0, 0, size, size).data, size));
+    }, 450);
+    return () => window.clearTimeout(id);
+  }, [renderVersion, source]);
 
   if (!source || !res) return null;
 

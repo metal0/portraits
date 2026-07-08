@@ -115,8 +115,12 @@ export function ExportBar() {
               type="button"
               className="btn btn--ghost btn--icon"
               onClick={downloadSvg}
-              disabled={pending || renderMode === "relief"}
-              title={renderMode === "relief" ? "SVG supports square and dot modes" : undefined}
+              disabled={pending || renderMode === "relief" || renderMode === "cmyk"}
+              title={
+                renderMode === "relief" || renderMode === "cmyk"
+                  ? "SVG supports square, dot and ASCII modes"
+                  : undefined
+              }
             >
               <Icon name="download" size={15} /> SVG (vector)
             </button>

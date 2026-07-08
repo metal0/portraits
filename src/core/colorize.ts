@@ -18,12 +18,21 @@ function buildPalette(sample: SampledGrid, color: ColorSettings): RGB[] | null {
   return medianCut(sample.cells, color.paletteSize);
 }
 
-function dithers(color: ColorSettings): boolean {
-  return (
-    color.dither === "floyd-steinberg" &&
-    (color.mode === "palette" || color.mode === "threshold")
-  );
+function ditherApplies(color: ColorSettings): boolean {
+  return color.dither !== "none" && (color.mode === "palette" || color.mode === "threshold");
 }
+
+// 8×8 Bayer threshold matrix, normalized to [-0.5, 0.5).
+const BAYER8 = [
+  [0, 32, 8, 40, 2, 34, 10, 42],
+  [48, 16, 56, 24, 50, 18, 58, 26],
+  [12, 44, 4, 36, 14, 46, 6, 38],
+  [60, 28, 52, 20, 62, 30, 54, 22],
+  [3, 35, 11, 43, 1, 33, 9, 41],
+  [51, 19, 59, 27, 49, 17, 57, 25],
+  [15, 47, 7, 39, 13, 45, 5, 37],
+  [63, 31, 55, 23, 61, 29, 53, 21],
+].map((row) => row.map((v) => (v + 0.5) / 64 - 0.5));
 
 /**
  * Produce final per-cell display colors for the active color mode. Cell
@@ -34,7 +43,7 @@ export function applyColor(sample: SampledGrid, color: ColorSettings): SampledGr
   const palette = buildPalette(sample, color);
   const paletteLab = palette ? toOklab(palette) : undefined;
 
-  if (!dithers(color)) {
+  if (!ditherApplies(color)) {
     const cells = sample.cells.map((c) => {
       const [r, g, b] = quantize(c.r, c.g, c.b, c.luma, color, palette, paletteLab);
       return { ...c, r, g, b };
@@ -43,7 +52,39 @@ export function applyColor(sample: SampledGrid, color: ColorSettings): SampledGr
   }
 
   const dPalette = color.mode === "palette" ? palette ?? BW : BW;
-  return floydSteinberg(sample, dPalette, color.mode === "palette" ? paletteLab : undefined);
+  const dLab = color.mode === "palette" ? paletteLab : undefined;
+  return color.dither === "bayer"
+    ? orderedDither(sample, color, dPalette, dLab)
+    : floydSteinberg(sample, dPalette, dLab);
+}
+
+/** Ordered (Bayer) dithering — a fixed screen, no error diffusion. */
+function orderedDither(
+  sample: SampledGrid,
+  color: ColorSettings,
+  palette: RGB[],
+  paletteLab?: Oklab[],
+): SampledGrid {
+  const { size, cells } = sample;
+  const spread = 132 / Math.sqrt(palette.length);
+  const cellsOut = cells.map((c) => {
+    const t = BAYER8[c.gy & 7][c.gx & 7];
+    if (color.mode === "threshold") {
+      const on = c.luma + t * 0.7 > color.threshold;
+      const v = on ? 255 : 0;
+      return { ...c, r: v, g: v, b: v, luma: on ? 1 : 0 };
+    }
+    const off = t * spread;
+    const [nr, ng, nb] = nearestColor(
+      Math.max(0, Math.min(255, c.r + off)),
+      Math.max(0, Math.min(255, c.g + off)),
+      Math.max(0, Math.min(255, c.b + off)),
+      palette,
+      paletteLab,
+    );
+    return { ...c, r: nr, g: ng, b: nb, luma: luminance(nr, ng, nb) };
+  });
+  return { size, cells: cellsOut };
 }
 
 function floydSteinberg(sample: SampledGrid, palette: RGB[], paletteLab?: Oklab[]): SampledGrid {

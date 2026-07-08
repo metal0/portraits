@@ -194,10 +194,25 @@ test("dithering changes the pixel layout", async ({ page }) => {
   await page.getByRole("tab", { name: "B/W" }).click();
   const flat = await canvasStats(page);
 
-  await page.getByText(/Floyd.*dither/i).click();
+  await page.getByRole("tab", { name: "Bayer" }).click();
   await expect
     .poll(async () => (await canvasStats(page)).variance)
     .not.toBe(flat.variance);
+});
+
+test("ascii and cmyk modes render", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+
+  await page.getByRole("tab", { name: "ASCII" }).click();
+  await expect
+    .poll(async () => (await canvasStats(page)).variance, { timeout: 5000 })
+    .toBeGreaterThan(15);
+
+  await page.getByRole("tab", { name: "CMYK" }).click();
+  await expect
+    .poll(async () => (await canvasStats(page)).distinct, { timeout: 5000 })
+    .toBeGreaterThan(10);
 });
 
 test("relief mode renders all variants", async ({ page }) => {

@@ -38,7 +38,7 @@ function renderSize(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void {
 /** Variant 2: full tiles with a beveled raised face + real cast shadow ~ height. */
 function renderHeight(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void {
   const cellSize = req.outputSizePx / sample.size;
-  const gap = cellSize * 0.09;
+  const gap = cellSize * 0.04;
   const s = cellSize - 2 * gap;
   if (s <= 0) return;
 
@@ -62,15 +62,16 @@ function renderHeight(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void
     const fx = bx + dx;
     const fy = by + dy;
 
-    // Soft drop shadow: fill the footprint with a shadow-casting rect, then the
-    // block covers the rect — only the offset, blurred halo remains visible.
-    if (shadow > 0 && h > 0.3) {
+    // Tight grounding shadow: fill the footprint with a shadow-casting rect,
+    // then the block covers the rect — only a small offset/blurred halo shows,
+    // so it grounds the block rather than flooding the gaps between tiles.
+    if (shadow > 0 && h > 0.4) {
       const norm = maxLift > 0 ? h / maxLift : 0;
       ctx.save();
-      ctx.shadowColor = `rgba(0,0,0,${(0.25 + 0.45 * shadow).toFixed(3)})`;
-      ctx.shadowBlur = shadow * cellSize * (0.35 + 0.65 * norm);
-      ctx.shadowOffsetX = cellSize * 0.06 + h * 0.4;
-      ctx.shadowOffsetY = cellSize * 0.06 + h * 0.4;
+      ctx.shadowColor = `rgba(0,0,0,${(0.28 + 0.4 * shadow).toFixed(3)})`;
+      ctx.shadowBlur = shadow * cellSize * (0.12 + 0.28 * norm);
+      ctx.shadowOffsetX = h * 0.28;
+      ctx.shadowOffsetY = h * 0.28;
       ctx.fillStyle = "#000";
       ctx.fillRect(bx, by, s, s);
       ctx.restore();

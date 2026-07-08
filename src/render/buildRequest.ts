@@ -13,6 +13,7 @@ export function currentRequest(): RenderRequest {
     square: s.square,
     dot: s.dot,
     relief: s.relief,
+    ascii: s.ascii,
     color: s.color,
     adjust: s.adjust,
     exportSettings: s.exportSettings,

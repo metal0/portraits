@@ -20,6 +20,7 @@ export function useRenderEngine(): void {
   const square = useStore((s) => s.square);
   const dot = useStore((s) => s.dot);
   const relief = useStore((s) => s.relief);
+  const ascii = useStore((s) => s.ascii);
   const color = useStore((s) => s.color);
   const adjust = useStore((s) => s.adjust);
   const exportSettings = useStore((s) => s.exportSettings);
@@ -47,6 +48,7 @@ export function useRenderEngine(): void {
         square,
         dot,
         relief,
+        ascii,
         color,
         adjust,
         exportSettings,
@@ -66,6 +68,7 @@ export function useRenderEngine(): void {
     square,
     dot,
     relief,
+    ascii,
     color,
     adjust,
     exportSettings,

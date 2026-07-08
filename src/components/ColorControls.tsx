@@ -1,8 +1,29 @@
 import { useStore } from "@/state/store";
-import { Section, Segmented, SliderField, Toggle, ColorField } from "./ui/Controls";
+import { Section, Segmented, SliderField, ColorField } from "./ui/Controls";
 import { Icon } from "./ui/Icon";
 import { PALETTE_PRESETS } from "@/core/palette";
-import type { ColorMode, PaletteSource } from "@/core/types";
+import type { ColorMode, DitherMode, PaletteSource } from "@/core/types";
+
+const DITHER_OPTIONS = [
+  { value: "none" as DitherMode, label: "None" },
+  { value: "floyd-steinberg" as DitherMode, label: "Floyd" },
+  { value: "bayer" as DitherMode, label: "Bayer" },
+];
+
+function DitherPicker({
+  value,
+  onChange,
+}: {
+  value: DitherMode;
+  onChange: (d: DitherMode) => void;
+}) {
+  return (
+    <div className="field">
+      <span className="field__label">Dither</span>
+      <Segmented<DitherMode> value={value} onChange={onChange} options={DITHER_OPTIONS} />
+    </div>
+  );
+}
 
 export function ColorControls() {
   const color = useStore((s) => s.color);
@@ -53,11 +74,7 @@ export function ColorControls() {
               onChange={(threshold) => setColor({ threshold })}
             />
           )}
-          <Toggle
-            label="Floyd–Steinberg dither"
-            checked={color.dither === "floyd-steinberg"}
-            onChange={(on) => setColor({ dither: on ? "floyd-steinberg" : "none" })}
-          />
+          <DitherPicker value={color.dither} onChange={(dither) => setColor({ dither })} />
         </>
       )}
 
@@ -138,11 +155,7 @@ export function ColorControls() {
             ))}
           </div>
 
-          <Toggle
-            label="Floyd–Steinberg dither"
-            checked={color.dither === "floyd-steinberg"}
-            onChange={(on) => setColor({ dither: on ? "floyd-steinberg" : "none" })}
-          />
+          <DitherPicker value={color.dither} onChange={(dither) => setColor({ dither })} />
         </>
       )}
     </Section>

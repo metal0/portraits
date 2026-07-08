@@ -1,8 +1,8 @@
-export type RenderMode = "square" | "dot" | "relief";
+export type RenderMode = "square" | "dot" | "relief" | "ascii" | "cmyk";
 
 export type ColorMode = "full-color" | "grayscale" | "threshold" | "duotone" | "palette";
 
-export type DitherMode = "none" | "floyd-steinberg";
+export type DitherMode = "none" | "floyd-steinberg" | "bayer";
 
 export type PaletteSource = "auto" | "custom";
 
@@ -59,6 +59,11 @@ export interface DotOptions {
 
 export type ReliefVariant = "size" | "height" | "iso";
 
+export interface AsciiOptions {
+  /** Character ramp ordered dark→light. */
+  ramp: string;
+}
+
 export interface ReliefOptions {
   variant: ReliefVariant;
   minScale: number;
@@ -114,6 +119,7 @@ export interface PresetConfig {
   square: SquareOptions;
   dot: DotOptions;
   relief: ReliefOptions;
+  ascii: AsciiOptions;
   color: ColorSettings;
   adjust: AdjustSettings;
   exportSettings: ExportSettings;
@@ -143,6 +149,7 @@ export interface RenderRequest {
   square: SquareOptions;
   dot: DotOptions;
   relief: ReliefOptions;
+  ascii: AsciiOptions;
   color: ColorSettings;
   adjust: AdjustSettings;
   exportSettings: ExportSettings;
