@@ -42,7 +42,10 @@ function renderHeight(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void
   const s = cellSize - 2 * gap;
   if (s <= 0) return;
 
-  const maxLift = cellSize * 0.95 * req.relief.heightScale;
+  // Saturating lift: responsive across the slider but bounded to ~1.3 cells so
+  // blocks never displace so far up-left that they overlap distant neighbors
+  // and the heightfield turns to chaos.
+  const maxLift = cellSize * 1.35 * (1 - Math.exp(-req.relief.heightScale * 0.95));
   const shadow = Math.min(1, req.relief.shadowBlur / 40); // 0 = off, 1 = strong
 
   const lift = (cell: Cell) => (1 - cell.luma) * maxLift;
