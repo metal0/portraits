@@ -816,6 +816,77 @@ input[type="range"] {
   width: 100%;
   padding: var(--space-3);
 }
+.modal__actions--row {
+  flex-direction: row;
+}
+.modal__dialog.crop {
+  width: min(100%, 560px);
+}
+
+/* ---- Crop editor ---- */
+.crop__stage {
+  position: relative;
+  align-self: center;
+  border-radius: var(--radius);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  background: var(--bg-input);
+}
+.crop__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.crop__box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  cursor: move;
+  touch-action: none;
+}
+.crop__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+  background-size: 33.33% 33.33%;
+  background-position: -1px -1px;
+}
+.crop__handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  touch-action: none;
+}
+.crop__handle--n,
+.crop__handle--s {
+  cursor: ns-resize;
+}
+.crop__handle--e,
+.crop__handle--w {
+  cursor: ew-resize;
+}
+.crop__handle--nw,
+.crop__handle--se {
+  cursor: nwse-resize;
+}
+.crop__handle--ne,
+.crop__handle--sw {
+  cursor: nesw-resize;
+}
+.crop__zoom {
+  margin-top: var(--space-2);
+}
 @keyframes fade-in {
   from {
     opacity: 0;

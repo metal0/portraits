@@ -16,6 +16,7 @@ export interface ImageLoader {
 export function useImageLoader(): ImageLoader {
   const setSource = useStore((s) => s.setSource);
   const setCrop = useStore((s) => s.setCrop);
+  const openCropModal = useStore((s) => s.openCropModal);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,13 +32,14 @@ export function useImageLoader(): ImageLoader {
         const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
         setSource(bitmap, file.name);
         setCrop({ x: 0.5, y: 0.5, scale: 1, rotation: 0 });
+        openCropModal();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to decode image");
       } finally {
         setLoading(false);
       }
     },
-    [setSource, setCrop],
+    [setSource, setCrop, openCropModal],
   );
 
   useEffect(() => {

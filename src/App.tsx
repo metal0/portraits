@@ -3,7 +3,7 @@ import { useImageLoader } from "@/hooks/useImageLoader";
 import { useRenderEngine } from "@/hooks/useRenderEngine";
 import { useStore } from "@/state/store";
 import { Uploader } from "@/components/Uploader";
-import { CropControls } from "@/components/CropControls";
+import { CropModal } from "@/components/CropModal";
 import { AdjustControls } from "@/components/AdjustControls";
 import { DisplayControls } from "@/components/DisplayControls";
 import { StyleControls } from "@/components/StyleControls";
@@ -55,7 +55,6 @@ export default function App() {
       <div className="app__body">
         <aside className="panel panel--left">
           <Uploader onFile={loadFile} error={error} loading={loading} />
-          <CropControls />
           <AdjustControls />
           <ColorControls />
           <DisplayControls />
@@ -65,6 +64,8 @@ export default function App() {
 
         <PreviewStage onFile={loadFile} />
       </div>
+
+      <CropModal />
     </div>
   );
 }

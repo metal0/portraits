@@ -10,6 +10,7 @@ export function Uploader(props: {
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const sourceName = useStore((s) => s.sourceName);
+  const openCropModal = useStore((s) => s.openCropModal);
 
   return (
     <Section icon="image" title="Image">
@@ -26,9 +27,14 @@ export function Uploader(props: {
         <span className="uploader__hint">PNG · JPG · WEBP · AVIF</span>
       </button>
       {sourceName && (
-        <p className="uploader__file">
-          <Icon name="check" size={12} /> {sourceName}
-        </p>
+        <>
+          <p className="uploader__file">
+            <Icon name="check" size={12} /> {sourceName}
+          </p>
+          <button type="button" className="btn btn--ghost btn--icon" onClick={openCropModal}>
+            <Icon name="crop" size={14} /> Recrop
+          </button>
+        </>
       )}
       {props.error && (
         <p className="uploader__error">

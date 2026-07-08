@@ -9,6 +9,8 @@ async function upload(page: Page) {
     mimeType: "image/png",
     buffer: FACE,
   });
+  // Accept the crop picker that opens on upload.
+  await page.getByRole("button", { name: /Apply crop/ }).click();
   await expect(page.locator(".stage__canvas")).toBeVisible();
   // Wait for the (debounced) first render to actually paint the canvas.
   await expect.poll(async () => (await canvasStats(page)).variance, { timeout: 5000 }).toBeGreaterThan(0);
@@ -96,11 +98,11 @@ test("grayscale reduces to neutral tones", async ({ page }) => {
 test("crop zoom changes the output", async ({ page }) => {
   await page.goto("/");
   await upload(page);
-  await expand(page, "Crop");
   const before = await canvasStats(page);
 
-  const zoom = page.getByRole("slider", { name: /Zoom/ });
-  await zoom.fill("2.5");
+  await page.getByRole("button", { name: "Recrop" }).click();
+  await page.getByRole("slider", { name: /Zoom/ }).fill("3");
+  await page.getByRole("button", { name: /Apply crop/ }).click();
   await expect
     .poll(async () => (await canvasStats(page)).variance)
     .not.toBe(before.variance);

@@ -34,6 +34,11 @@ interface AppState {
   /** User-saved presets, persisted to localStorage. */
   presets: CustomPreset[];
 
+  /** Whether the crop/zoom picker modal is open. */
+  cropModalOpen: boolean;
+  openCropModal: () => void;
+  closeCropModal: () => void;
+
   setSource: (bitmap: ImageBitmap | null, name?: string | null) => void;
   setCrop: (patch: Partial<Crop>) => void;
   setGrid: (patch: Partial<GridSettings>) => void;
@@ -151,6 +156,10 @@ export const useStore = create<AppState>()(
   setColor: (patch) => set((s) => ({ color: { ...s.color, ...patch } })),
   setAdjust: (patch) => set((s) => ({ adjust: { ...s.adjust, ...patch } })),
   setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
+
+  cropModalOpen: false,
+  openCropModal: () => set({ cropModalOpen: true }),
+  closeCropModal: () => set({ cropModalOpen: false }),
 
   renderVersion: 0,
   bumpRender: () => set((s) => ({ renderVersion: s.renderVersion + 1, renderPending: false })),
