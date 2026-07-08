@@ -108,6 +108,25 @@ test("crop zoom changes the output", async ({ page }) => {
     .not.toBe(before.variance);
 });
 
+test("crop edge handle resizes the selection", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+  await page.getByRole("button", { name: "Recrop" }).click();
+
+  const box = page.locator(".crop__box");
+  const before = (await box.boundingBox())!;
+
+  // Drag the east (right-edge) handle inward — must resize, not move the box.
+  const e = (await page.locator(".crop__handle--e").boundingBox())!;
+  await page.mouse.move(e.x + e.width / 2, e.y + e.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(e.x + e.width / 2 - 50, e.y + e.height / 2, { steps: 6 });
+  await page.mouse.up();
+
+  const after = (await box.boundingBox())!;
+  expect(before.width - after.width).toBeGreaterThan(15);
+});
+
 test("posterize reduces distinct colors", async ({ page }) => {
   await page.goto("/");
   await upload(page);

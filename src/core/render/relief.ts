@@ -35,7 +35,7 @@ function renderSize(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void {
   ctx.shadowOffsetY = 0;
 }
 
-/** Variant 2: full tiles with a beveled raised face; drop shadow ~ height. */
+/** Variant 2: full tiles with a beveled raised face + real cast shadow ~ height. */
 function renderHeight(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void {
   const cellSize = req.outputSizePx / sample.size;
   const gap = cellSize * 0.09;
@@ -43,33 +43,38 @@ function renderHeight(ctx: Ctx2D, sample: SampledGrid, req: RenderRequest): void
   if (s <= 0) return;
 
   const maxLift = cellSize * 0.95 * req.relief.heightScale;
-  const shadowStrength = Math.min(1, req.relief.shadowBlur / 40);
-  const shadowAlpha = 0.18 + 0.32 * shadowStrength;
+  const shadow = Math.min(1, req.relief.shadowBlur / 40); // 0 = off, 1 = strong
 
   const lift = (cell: Cell) => (1 - cell.luma) * maxLift;
-  const baseX = (cell: Cell) => cell.gx * cellSize + gap;
-  const baseY = (cell: Cell) => cell.gy * cellSize + gap;
 
-  // Pass 1: cast shadows on the base plane (so no shadow paints over a face).
-  ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
-  for (const cell of sample.cells) {
-    if (cell.a < ALPHA_CUTOFF) continue;
-    const h = lift(cell);
-    if (h <= 0.5) continue;
-    ctx.fillRect(baseX(cell) + h * 0.28, baseY(cell) + h * 0.28, s, s);
-  }
+  // Back-to-front (bottom-right first): nearer, up-left blocks — and the
+  // shadows they cast toward the floor — paint on top of the blocks behind.
+  const ordered = [...sample.cells].sort((a, b) => b.gx + b.gy - (a.gx + a.gy));
 
-  // Pass 2: extruded blocks — top face lifted up-left, side walls exposed.
-  for (const cell of sample.cells) {
+  for (const cell of ordered) {
     if (cell.a < ALPHA_CUTOFF) continue;
     const rgb: RGB = [cell.r, cell.g, cell.b];
     const h = lift(cell);
-    const bx = baseX(cell);
-    const by = baseY(cell);
+    const bx = cell.gx * cellSize + gap;
+    const by = cell.gy * cellSize + gap;
     const dx = -h * 0.6;
     const dy = -h * 0.6;
     const fx = bx + dx;
     const fy = by + dy;
+
+    // Soft drop shadow: fill the footprint with a shadow-casting rect, then the
+    // block covers the rect — only the offset, blurred halo remains visible.
+    if (shadow > 0 && h > 0.3) {
+      const norm = maxLift > 0 ? h / maxLift : 0;
+      ctx.save();
+      ctx.shadowColor = `rgba(0,0,0,${(0.25 + 0.45 * shadow).toFixed(3)})`;
+      ctx.shadowBlur = shadow * cellSize * (0.35 + 0.65 * norm);
+      ctx.shadowOffsetX = cellSize * 0.06 + h * 0.4;
+      ctx.shadowOffsetY = cellSize * 0.06 + h * 0.4;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(bx, by, s, s);
+      ctx.restore();
+    }
 
     if (h > 0.5) {
       // Right wall.

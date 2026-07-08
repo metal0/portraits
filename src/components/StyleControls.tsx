@@ -14,24 +14,49 @@ export function StyleControls() {
   const relief = useStore((s) => s.relief);
   const setRelief = useStore((s) => s.setRelief);
 
-  // Style options auto-collapse when the user clicks away, and reopen when a
-  // style button is pressed — so idle sliders don't clutter the panel.
+  // Style options auto-collapse ~5s after the user clicks away, and reopen when
+  // a style button is pressed — so idle sliders don't clutter the panel. The
+  // pending close is aborted if they click back onto the options.
   const [optionsOpen, setOptionsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<number | null>(null);
+
+  const cancelClose = () => {
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
 
   useEffect(() => {
     if (!optionsOpen) return;
     const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOptionsOpen(false);
+      const inside = ref.current?.contains(e.target as Node);
+      if (inside) {
+        cancelClose();
+      } else if (closeTimer.current === null) {
+        closeTimer.current = window.setTimeout(() => {
+          closeTimer.current = null;
+          setOptionsOpen(false);
+        }, 5000);
+      }
     };
     document.addEventListener("pointerdown", onDown);
-    return () => document.removeEventListener("pointerdown", onDown);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      cancelClose();
+    };
   }, [optionsOpen]);
 
   return (
     <Section icon="sliders" title="Style">
       <div ref={ref}>
-        <div onPointerDown={() => setOptionsOpen(true)}>
+        <div
+          onPointerDown={() => {
+            cancelClose();
+            setOptionsOpen(true);
+          }}
+        >
           <Segmented<RenderMode>
             value={renderMode}
             onChange={setRenderMode}

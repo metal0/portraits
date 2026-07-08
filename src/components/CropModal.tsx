@@ -109,6 +109,9 @@ function CropEditor(props: {
 
   const onPointerDown = (handle: Handle) => (e: React.PointerEvent) => {
     e.preventDefault();
+    // Handles live inside the draggable box; stop the event so a handle press
+    // starts a resize instead of bubbling up to the box's "move" handler.
+    if (handle !== "move") e.stopPropagation();
     (e.target as Element).setPointerCapture(e.pointerId);
     drag.current = { handle, box };
     dragStart.current = pointerToSrc(e);
