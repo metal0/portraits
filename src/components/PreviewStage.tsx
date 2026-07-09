@@ -4,6 +4,7 @@ import { useStore } from "@/state/store";
 import { getOutputCanvas } from "@/render/engine";
 import { ComparePreviews } from "./ComparePreviews";
 import { ReadabilityMeter } from "./ReadabilityMeter";
+import { AntiFrMeter } from "./AntiFrMeter";
 
 const PREVIEW_MAX = 512;
 
@@ -66,6 +67,7 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
             </div>
           </div>
           <ReadabilityMeter />
+          <AntiFrMeter />
           <ComparePreviews />
         </div>
       ) : (

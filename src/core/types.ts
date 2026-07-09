@@ -160,8 +160,12 @@ export interface AntiFrOptions {
 
 /** Result of measuring the rendered avatar against the bundled FR models. */
 export interface MatchResult {
-  /** Cosine similarity in [-1, 1] between the mosaic and the original face. */
-  score: number;
+  /**
+   * Euclidean distance between the mosaic's and the original's face descriptor.
+   * Lower = more matchable; face-api treats < 0.6 as the same person. Infinity
+   * when no face was detected in the mosaic (the strongest privacy outcome).
+   */
+  distance: number;
   /** Whether the bundled detector still finds a face in the mosaic. */
   detected: boolean;
   /** Detector confidence for the mosaic, when a face was found. */

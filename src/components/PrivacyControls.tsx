@@ -6,6 +6,8 @@ export function PrivacyControls() {
   const source = useStore((s) => s.source);
   const antiFr = useStore((s) => s.antiFr);
   const setAntiFr = useStore((s) => s.setAntiFr);
+  const frEngaged = useStore((s) => s.frEngaged);
+  const setFrEngaged = useStore((s) => s.setFrEngaged);
 
   if (!source) return null;
 
@@ -17,6 +19,18 @@ export function PrivacyControls() {
         Reduces how well face recognition can match this avatar to you. Measured against a bundled
         open-source model — a guide, not a guarantee against every system.
       </p>
+
+      <Toggle
+        label="Measure FR matchability"
+        checked={frEngaged}
+        onChange={setFrEngaged}
+      />
+      {frEngaged && (
+        <p className="field__label">
+          Loads a ~7&nbsp;MB face model locally (one time, nothing is uploaded) and scores how
+          matchable the mosaic is above the preview.
+        </p>
+      )}
 
       <Toggle
         label="Hide feature band"
@@ -57,7 +71,10 @@ export function PrivacyControls() {
       <Toggle
         label="Warp geometry"
         checked={warp.enabled}
-        onChange={(enabled) => setAntiFr({ warp: { ...warp, enabled } })}
+        onChange={(enabled) => {
+          setAntiFr({ warp: { ...warp, enabled } });
+          if (enabled) setFrEngaged(true);
+        }}
       />
       {warp.enabled && (
         <>
@@ -71,7 +88,7 @@ export function PrivacyControls() {
             onChange={(v) => setAntiFr({ warp: { ...warp, strength: v / 100 } })}
           />
           {!landmarks && (
-            <p className="field__label">Waiting on face detection — warp needs a detected face.</p>
+            <p className="field__label">Detecting the face… warp activates once it’s found.</p>
           )}
         </>
       )}

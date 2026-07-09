@@ -37,7 +37,9 @@ interface AppState {
   exportSettings: ExportSettings;
   antiFr: AntiFrOptions;
 
-  /** Baseline embedding of the original face; session-only, never persisted. */
+  /** True once the user opts into local FR analysis (lazy-loads the models). */
+  frEngaged: boolean;
+  /** Baseline descriptor of the original face; session-only, never persisted. */
   baselineEmbedding: Float32Array | null;
   /** Latest measurement of the rendered mosaic vs the original; session-only. */
   matchResult: MatchResult | null;
@@ -62,6 +64,7 @@ interface AppState {
   setAdjust: (patch: Partial<AdjustSettings>) => void;
   setExport: (patch: Partial<ExportSettings>) => void;
   setAntiFr: (patch: Partial<AntiFrOptions>) => void;
+  setFrEngaged: (engaged: boolean) => void;
   setLandmarks: (landmarks: FaceLandmarks | null) => void;
   setBaselineEmbedding: (embedding: Float32Array | null) => void;
   setMatchResult: (result: MatchResult | null) => void;
@@ -178,6 +181,7 @@ export const useStore = create<AppState>()(
     landmarks: null,
   },
 
+  frEngaged: false,
   baselineEmbedding: null,
   matchResult: null,
 
@@ -200,6 +204,7 @@ export const useStore = create<AppState>()(
   setAdjust: (patch) => set((s) => ({ adjust: { ...s.adjust, ...patch } })),
   setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
   setAntiFr: (patch) => set((s) => ({ antiFr: { ...s.antiFr, ...patch } })),
+  setFrEngaged: (frEngaged) => set({ frEngaged }),
   setLandmarks: (landmarks) => set((s) => ({ antiFr: { ...s.antiFr, landmarks } })),
   setBaselineEmbedding: (baselineEmbedding) => set({ baselineEmbedding }),
   setMatchResult: (matchResult) => set({ matchResult }),
