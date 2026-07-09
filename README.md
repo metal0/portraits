@@ -18,13 +18,15 @@ Everything runs inside your browser tab. No server, no sign-up, no uploads. Your
 
 ## Why use it
 
-🕶️ &nbsp;**Keep your real face offline.** Profile photos get scraped, indexed, and fed into face-recognition systems and AI training sets. A pixel mosaic still reads as a recognizable "you" to friends and coworkers, but it isn't a clean photo a scanner can match to your identity.
+🎨 &nbsp;**An avatar, not a photo you lose control of.** You upload a mosaic of your face instead of the real thing, so the sharpest copy anyone can ever pull is the mosaic you made. Your actual photo never leaves your computer.
 
-🔍 &nbsp;**Survives tiny sizes.** Discord, Slack, and GitHub squash your avatar down to 32 or 64 pixels wide, where a normal photo turns into a blurry smudge. Portraits works the other way around: you tell it how small the picture will be shown, and it builds a mosaic coarse enough to survive the shrink.
+🔍 &nbsp;**Survives tiny sizes.** Discord, Slack, and GitHub squash your avatar down to 32 or 64 pixels wide, where a normal photo turns into a blurry smudge. Portraits works the other way around: you tell it how small the picture will be shown, and it builds a mosaic coarse enough to still read clearly once it's shrunk.
 
-🎯 &nbsp;**The blur isn't real protection.** A small, blurry avatar only looks private. On most platforms any user can fetch the full-resolution original you uploaded, so the sharp photo is one request away no matter how tiny it renders. The fix is to never upload a real photo in the first place: feed Portraits your face and use the mosaic itself as your source image, so the highest-resolution copy anyone can pull is already a mosaic.
+🎯 &nbsp;**A tiny avatar isn't really private.** On most platforms any user can fetch the full-resolution original you uploaded, so a small, blurry-looking avatar only *looks* private — the sharp photo is one request away. The fix is to never upload the real photo in the first place.
 
-🔒 &nbsp;**Private by design.** All the work happens locally in your browser, so your original photo is never sent anywhere. Nobody, not us or any cloud service, ever sees it.
+🔒 &nbsp;**Nothing leaves your browser.** All the work happens locally, so your original photo is never sent anywhere. Nobody — not us, not any cloud service — ever sees it.
+
+**What it can and can't do.** Portraits keeps your real photo off the internet and gives you an avatar that still reads as *you* to people who know you. It is **not** a face-recognition blocker: a mosaic a friend can recognize can often still be matched by software, since both rely on the same rough shapes. Fewer colors and a chunkier grid make it more private but less recognizable — Portraits gives you that dial, and where you set it is up to you.
 
 ## How it works
 
