@@ -2,81 +2,50 @@ import { useState } from "react";
 import { useStore } from "@/state/store";
 import { Section, Segmented, SliderField, Toggle } from "./ui/Controls";
 import { currentRequest } from "@/render/buildRequest";
-import { hardenGrid } from "@/analysis/harden";
+import { optimizeCloak } from "@/analysis/cloakOptimize";
 import { isPhotoLike } from "@/core/antifr/cloak";
-import { GRID_MIN } from "@/core/grid";
 import type { OcclusionRegion, OcclusionStyle } from "@/core/types";
 
 export function PrivacyControls() {
   const source = useStore((s) => s.source);
   const antiFr = useStore((s) => s.antiFr);
   const setAntiFr = useStore((s) => s.setAntiFr);
-  const frEngaged = useStore((s) => s.frEngaged);
-  const setFrEngaged = useStore((s) => s.setFrEngaged);
   const baseline = useStore((s) => s.baselineEmbedding);
   const gridSize = useStore((s) => s.effectiveGrid());
   const colorMode = useStore((s) => s.color.mode);
-  const [hardening, setHardening] = useState(false);
-  const [hardenNote, setHardenNote] = useState<string | null>(null);
+  const [optimizing, setOptimizing] = useState(false);
 
   if (!source) return null;
 
-  const { occlusion, warp, cloak, landmarks } = antiFr;
+  const { occlusion, warp, cloak, cloakField, landmarks } = antiFr;
   const cloakActive = isPhotoLike(gridSize, colorMode);
 
-  const autoHarden = async () => {
+  const runOptimize = async () => {
     const st = useStore.getState();
     if (!st.source || !st.baselineEmbedding) return;
-    setHardening(true);
-    setHardenNote(null);
+    setOptimizing(true);
     try {
-      const result = await hardenGrid(
+      const field = await optimizeCloak(
         st.source,
         st.baselineEmbedding,
         currentRequest(),
-        st.effectiveGrid(),
-        GRID_MIN,
+        st.antiFr.cloak.strength,
         st.grid.displaySizePx,
         st.grid.outputSizePx,
       );
-      if (!result) return;
-      st.setGrid({ gridOverride: result.grid });
-      setHardenNote(
-        result.defeated
-          ? `Coarsened to ${result.grid}×${result.grid} — no longer matchable.`
-          : `Reached ${result.grid}×${result.grid}; still faintly matchable. Try reducing colors too.`,
-      );
+      if (field) setAntiFr({ cloak: { ...st.antiFr.cloak, enabled: true }, cloakField: field });
     } finally {
-      setHardening(false);
+      setOptimizing(false);
     }
   };
 
   return (
     <Section icon="shield" title="Privacy" collapsible defaultCollapsed>
       <p className="field__label">
-        Reduces how well face recognition can match this avatar to you. Measured against a bundled
-        open-source model — a guide, not a guarantee against every system.
+        Reduces how well face recognition can match this avatar to you. Turning on any tool loads a
+        ~7&nbsp;MB face model locally (one time, nothing is uploaded) and scores the result above the
+        preview — a guide, not a guarantee against every system.
       </p>
-
-      <Toggle
-        label="Measure FR matchability"
-        checked={frEngaged}
-        onChange={setFrEngaged}
-      />
-      {frEngaged && (
-        <p className="field__label">
-          Loads a ~7&nbsp;MB face model locally (one time, nothing is uploaded) and scores how
-          matchable the mosaic is above the preview.
-        </p>
-      )}
-      {frEngaged && baseline && (
-        <>
-          <button type="button" className="btn btn--primary btn--block" onClick={autoHarden} disabled={hardening}>
-            {hardening ? "Hardening…" : "Auto-harden grid"}
-          </button>
-          {hardenNote && <p className="field__label">{hardenNote}</p>}
-        </>
-      )}
 
       <Toggle
         label="Hide feature band"
@@ -117,10 +86,7 @@ export function PrivacyControls() {
       <Toggle
         label="Warp geometry"
         checked={warp.enabled}
-        onChange={(enabled) => {
-          setAntiFr({ warp: { ...warp, enabled } });
-          if (enabled) setFrEngaged(true);
-        }}
+        onChange={(enabled) => setAntiFr({ warp: { ...warp, enabled } })}
       />
       {warp.enabled && (
         <>
@@ -142,26 +108,41 @@ export function PrivacyControls() {
       <Toggle
         label="Adversarial cloak (experimental)"
         checked={cloak.enabled}
-        onChange={(enabled) => setAntiFr({ cloak: { ...cloak, enabled } })}
+        onChange={(enabled) =>
+          setAntiFr(enabled ? { cloak: { ...cloak, enabled } } : { cloak: { ...cloak, enabled }, cloakField: null })
+        }
       />
-      {cloak.enabled && (
-        <>
-          <SliderField
-            label="Cloak strength"
-            value={Math.round(cloak.strength * 100)}
-            min={10}
-            max={100}
-            step={5}
-            suffix="%"
-            onChange={(v) => setAntiFr({ cloak: { ...cloak, strength: v / 100 } })}
-          />
+      {cloak.enabled &&
+        (cloakActive ? (
+          <>
+            <SliderField
+              label="Cloak budget"
+              value={Math.round(cloak.strength * 100)}
+              min={10}
+              max={100}
+              step={5}
+              suffix="%"
+              onChange={(v) => setAntiFr({ cloak: { ...cloak, strength: v / 100 } })}
+            />
+            <button
+              type="button"
+              className="btn btn--primary btn--block"
+              onClick={runOptimize}
+              disabled={optimizing || !baseline}
+            >
+              {optimizing ? "Optimizing…" : cloakField ? "Re-optimize cloak" : "Optimize cloak"}
+            </button>
+            <p className="field__label">
+              {cloakField
+                ? "Cloak baked in — watch the meter. Model-specific; an arms race like a CAPTCHA."
+                : "Searches for a perturbation that lowers the match score (~10s). Watch the meter."}
+            </p>
+          </>
+        ) : (
           <p className="field__label">
-            {cloakActive
-              ? "Experimental texture — watch the meter to see if it helps. Model-specific; an arms race like a CAPTCHA."
-              : "Inactive: only a fine, full-color render (grid ≥ 96) keeps it — the mosaic erases it otherwise."}
+            Inactive: needs a fine, full-color render (grid ≥ 96) — the mosaic erases it otherwise.
           </p>
-        </>
-      )}
+        ))}
     </Section>
   );
 }

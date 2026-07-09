@@ -14,7 +14,9 @@ const MEASURE_DEBOUNCE_MS = 600;
  * that baseline on each render. Models load lazily on first use.
  */
 export function useFaceMatch(): void {
-  const frEngaged = useStore((s) => s.frEngaged);
+  const active = useStore(
+    (s) => s.antiFr.occlusion.enabled || s.antiFr.warp.enabled || s.antiFr.cloak.enabled,
+  );
   const source = useStore((s) => s.source);
   const crop = useStore((s) => s.crop);
   const renderVersion = useStore((s) => s.renderVersion);
@@ -25,7 +27,7 @@ export function useFaceMatch(): void {
   const measuring = useRef(false);
 
   useEffect(() => {
-    if (!frEngaged || !source) return;
+    if (!active || !source) return;
     const key = `${source.width}x${source.height}:${crop.x.toFixed(4)},${crop.y.toFixed(4)},${crop.scale.toFixed(3)}`;
     if (baselineKey.current === key) return;
 
@@ -53,10 +55,10 @@ export function useFaceMatch(): void {
     return () => {
       cancelled = true;
     };
-  }, [frEngaged, source, crop]);
+  }, [active, source, crop]);
 
   useEffect(() => {
-    if (!frEngaged || !source || !baseline) return;
+    if (!active || !source || !baseline) return;
 
     const id = window.setTimeout(async () => {
       if (measuring.current) return;
@@ -76,5 +78,5 @@ export function useFaceMatch(): void {
     }, MEASURE_DEBOUNCE_MS);
 
     return () => window.clearTimeout(id);
-  }, [frEngaged, source, baseline, renderVersion, previewPx]);
+  }, [active, source, baseline, renderVersion, previewPx]);
 }

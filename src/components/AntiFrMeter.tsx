@@ -11,12 +11,14 @@ function verdict(distance: number, detected: boolean): { slug: string; label: st
 
 export function AntiFrMeter() {
   useFaceMatch();
-  const frEngaged = useStore((s) => s.frEngaged);
+  const active = useStore(
+    (s) => s.antiFr.occlusion.enabled || s.antiFr.warp.enabled || s.antiFr.cloak.enabled,
+  );
   const source = useStore((s) => s.source);
   const baseline = useStore((s) => s.baselineEmbedding);
   const result = useStore((s) => s.matchResult);
 
-  if (!source || !frEngaged) return null;
+  if (!source || !active) return null;
 
   if (!baseline && !result) {
     return <div className="meter meter--fr meter--loading">Loading local face model…</div>;

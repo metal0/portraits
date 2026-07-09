@@ -37,8 +37,6 @@ interface AppState {
   exportSettings: ExportSettings;
   antiFr: AntiFrOptions;
 
-  /** True once the user opts into local FR analysis (lazy-loads the models). */
-  frEngaged: boolean;
   /** Baseline descriptor of the original face; session-only, never persisted. */
   baselineEmbedding: Float32Array | null;
   /** Latest measurement of the rendered mosaic vs the original; session-only. */
@@ -64,7 +62,6 @@ interface AppState {
   setAdjust: (patch: Partial<AdjustSettings>) => void;
   setExport: (patch: Partial<ExportSettings>) => void;
   setAntiFr: (patch: Partial<AntiFrOptions>) => void;
-  setFrEngaged: (engaged: boolean) => void;
   setLandmarks: (landmarks: FaceLandmarks | null) => void;
   setBaselineEmbedding: (embedding: Float32Array | null) => void;
   setMatchResult: (result: MatchResult | null) => void;
@@ -101,7 +98,7 @@ function snapshot(s: AppState): PresetConfig {
     color: { ...s.color, customPalette: [...s.color.customPalette] },
     adjust: { ...s.adjust },
     exportSettings: { ...s.exportSettings },
-    antiFr: { ...s.antiFr, landmarks: null },
+    antiFr: { ...s.antiFr, landmarks: null, cloakField: null },
   };
 }
 
@@ -124,6 +121,7 @@ const initialAntiFr: AntiFrOptions = {
   occlusion: { enabled: false, region: "eyes", style: "bar", strength: 0.5 },
   warp: { enabled: false, strength: 0.5 },
   cloak: { enabled: false, strength: 0.5 },
+  cloakField: null,
   landmarks: null,
 };
 
@@ -178,10 +176,10 @@ export const useStore = create<AppState>()(
     occlusion: { ...initialAntiFr.occlusion },
     warp: { ...initialAntiFr.warp },
     cloak: { ...initialAntiFr.cloak },
+    cloakField: null,
     landmarks: null,
   },
 
-  frEngaged: false,
   baselineEmbedding: null,
   matchResult: null,
 
@@ -191,7 +189,7 @@ export const useStore = create<AppState>()(
       sourceName: name,
       baselineEmbedding: null,
       matchResult: null,
-      antiFr: { ...s.antiFr, landmarks: null },
+      antiFr: { ...s.antiFr, landmarks: null, cloakField: null },
     })),
   setCrop: (patch) => set((s) => ({ crop: { ...s.crop, ...patch } })),
   setGrid: (patch) => set((s) => ({ grid: { ...s.grid, ...patch } })),
@@ -204,7 +202,6 @@ export const useStore = create<AppState>()(
   setAdjust: (patch) => set((s) => ({ adjust: { ...s.adjust, ...patch } })),
   setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
   setAntiFr: (patch) => set((s) => ({ antiFr: { ...s.antiFr, ...patch } })),
-  setFrEngaged: (frEngaged) => set({ frEngaged }),
   setLandmarks: (landmarks) => set((s) => ({ antiFr: { ...s.antiFr, landmarks } })),
   setBaselineEmbedding: (baselineEmbedding) => set({ baselineEmbedding }),
   setMatchResult: (matchResult) => set({ matchResult }),

@@ -141,8 +141,14 @@ export interface WarpOptions {
 
 export interface CloakOptions {
   enabled: boolean;
-  /** 0..1 — perturbation magnitude; only meaningful on photo-like output. */
+  /** 0..1 — perturbation budget the optimizer is allowed to spend. */
   strength: number;
+}
+
+/** A baked, low-resolution RGB perturbation field (size×size×3 deltas). */
+export interface CloakField {
+  data: Float32Array;
+  size: number;
 }
 
 /**
@@ -155,6 +161,8 @@ export interface AntiFrOptions {
   occlusion: OcclusionOptions;
   warp: WarpOptions;
   cloak: CloakOptions;
+  /** Optimized cloak perturbation; image-derived, not saved to presets. */
+  cloakField: CloakField | null;
   landmarks: FaceLandmarks | null;
 }
 

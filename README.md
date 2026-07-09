@@ -26,7 +26,7 @@ Everything runs inside your browser tab. No server, no sign-up, no uploads. Your
 
 🔒 &nbsp;**Nothing leaves your browser.** All the work happens locally, so your original photo is never sent anywhere. Nobody — not us, not any cloud service — ever sees it.
 
-🛡️ &nbsp;**Measure it, don't guess.** Turn on the optional Privacy tools and Portraits runs real open-source face-detection and face-recognition models **locally in your browser** — nothing is uploaded — to score how well the mosaic still matches your original. Then it hands you the levers to push that score down: mask the eyes, subtly warp the face geometry, or one-click *auto-harden* until a recognizer loses you. You watch the number move.
+🛡️ &nbsp;**Measure it, don't guess.** Turn on any of the optional Privacy tools and Portraits runs real open-source face-detection and face-recognition models **locally in your browser** — nothing is uploaded — to score how well the mosaic still matches your original. Then it hands you the levers to push that score down: mask the eyes, subtly warp the face geometry, or optimize an adversarial cloak against the model until a recognizer loses you. You watch the number move.
 
 **What it can and can't do.** Portraits keeps your real photo off the internet and gives you an avatar that still reads as *you* to people who know you, plus an honest, measured readout of how matchable it is. It is still **not** a guarantee against every face-recognition system: a score is only as good as the model behind it, and the more you degrade the picture the less it looks like you. Portraits gives you the dial and the measurement — where you set it is up to you.
 
@@ -45,7 +45,7 @@ Most tools make an avatar and *hope* it survives being resized. Portraits works 
 - ✂️ &nbsp;**Framing.** Crop to a square or circle, add a round mask, and pick a transparent or solid background.
 - 💾 &nbsp;**Presets.** Save a look you like, name it, and share it with others as a small file.
 - ⬇️ &nbsp;**Real downloads.** Export a PNG at 512, 1024, or 2048 pixels, or a crisp SVG vector (for the square and dot styles).
-- 🛡️ &nbsp;**Privacy tools (optional).** Measure how well face recognition can still match your avatar — computed entirely on your machine — then dial it down with eye-band masking, subtle geometry warping, an auto-harden button, and an experimental cloak. Loads a ~7 MB local model only when you turn it on.
+- 🛡️ &nbsp;**Privacy tools (optional).** Mask the eyes, subtly warp the face geometry, or optimize an experimental adversarial cloak — and Portraits measures how well face recognition can still match your avatar, entirely on your machine, so you can dial it down. The ~7 MB model loads automatically the first time you turn any of them on.
 
 ---
 

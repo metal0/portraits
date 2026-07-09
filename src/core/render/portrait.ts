@@ -56,9 +56,9 @@ export function renderPortrait(ctx: Ctx2D, source: ImageBitmap, req: RenderReque
     renderSquare(ctx, sample, req);
   }
 
-  const { cloak, landmarks } = req.antiFr;
-  if (cloak.enabled && isPhotoLike(req.gridSize, req.color.mode)) {
-    applyCloak(ctx, size, cloak, landmarks);
+  const { cloak, cloakField } = req.antiFr;
+  if (cloak.enabled && cloakField && isPhotoLike(req.gridSize, req.color.mode)) {
+    applyCloak(ctx, size, cloakField);
   }
 
   ctx.restore();
