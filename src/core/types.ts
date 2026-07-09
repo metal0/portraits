@@ -107,6 +107,67 @@ export interface ExportSettings {
   backgroundColor: string;
 }
 
+/** A point normalized to the cropped square, both axes in [0, 1]. */
+export interface FacePoint {
+  x: number;
+  y: number;
+}
+
+/** Five-point face landmarks (normalized to the crop square) from the detector. */
+export interface FaceLandmarks {
+  leftEye: FacePoint;
+  rightEye: FacePoint;
+  nose: FacePoint;
+  mouthLeft: FacePoint;
+  mouthRight: FacePoint;
+}
+
+export type OcclusionRegion = "eyes" | "eyes-nose";
+export type OcclusionStyle = "bar" | "scramble" | "pixelate";
+
+export interface OcclusionOptions {
+  enabled: boolean;
+  region: OcclusionRegion;
+  style: OcclusionStyle;
+  /** 0..1 — band thickness / intensity of the occlusion. */
+  strength: number;
+}
+
+export interface WarpOptions {
+  enabled: boolean;
+  /** 0..1 — how far landmark regions are displaced before downscaling. */
+  strength: number;
+}
+
+export interface CloakOptions {
+  enabled: boolean;
+  /** 0..1 — perturbation magnitude; only meaningful on photo-like output. */
+  strength: number;
+}
+
+/**
+ * Optional anti-facial-recognition settings. `landmarks` is image-derived
+ * (filled once detection lands) and travels in the render request so the
+ * transforms are deterministic in both preview and export; it is not a saved
+ * style and is cleared from presets.
+ */
+export interface AntiFrOptions {
+  occlusion: OcclusionOptions;
+  warp: WarpOptions;
+  cloak: CloakOptions;
+  landmarks: FaceLandmarks | null;
+}
+
+/** Result of measuring the rendered avatar against the bundled FR models. */
+export interface MatchResult {
+  /** Cosine similarity in [-1, 1] between the mosaic and the original face. */
+  score: number;
+  /** Whether the bundled detector still finds a face in the mosaic. */
+  detected: boolean;
+  /** Detector confidence for the mosaic, when a face was found. */
+  detectionScore: number;
+}
+
 export interface DisplayPreset {
   displaySizePx: number;
   targetBlockScreenPx: number;
@@ -123,6 +184,7 @@ export interface PresetConfig {
   color: ColorSettings;
   adjust: AdjustSettings;
   exportSettings: ExportSettings;
+  antiFr: AntiFrOptions;
 }
 
 export interface CustomPreset {
@@ -153,4 +215,5 @@ export interface RenderRequest {
   color: ColorSettings;
   adjust: AdjustSettings;
   exportSettings: ExportSettings;
+  antiFr: AntiFrOptions;
 }

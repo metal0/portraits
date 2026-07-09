@@ -2,13 +2,16 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   AdjustSettings,
+  AntiFrOptions,
   AsciiOptions,
   ColorSettings,
   Crop,
   CustomPreset,
   DotOptions,
   ExportSettings,
+  FaceLandmarks,
   GridSettings,
+  MatchResult,
   PresetConfig,
   ReliefOptions,
   RenderMode,
@@ -32,6 +35,12 @@ interface AppState {
   color: ColorSettings;
   adjust: AdjustSettings;
   exportSettings: ExportSettings;
+  antiFr: AntiFrOptions;
+
+  /** Baseline embedding of the original face; session-only, never persisted. */
+  baselineEmbedding: Float32Array | null;
+  /** Latest measurement of the rendered mosaic vs the original; session-only. */
+  matchResult: MatchResult | null;
 
   /** User-saved presets, persisted to localStorage. */
   presets: CustomPreset[];
@@ -52,6 +61,10 @@ interface AppState {
   setColor: (patch: Partial<ColorSettings>) => void;
   setAdjust: (patch: Partial<AdjustSettings>) => void;
   setExport: (patch: Partial<ExportSettings>) => void;
+  setAntiFr: (patch: Partial<AntiFrOptions>) => void;
+  setLandmarks: (landmarks: FaceLandmarks | null) => void;
+  setBaselineEmbedding: (embedding: Float32Array | null) => void;
+  setMatchResult: (result: MatchResult | null) => void;
 
   /** Bumped after each engine render so consumers can redraw. */
   renderVersion: number;
@@ -85,6 +98,7 @@ function snapshot(s: AppState): PresetConfig {
     color: { ...s.color, customPalette: [...s.color.customPalette] },
     adjust: { ...s.adjust },
     exportSettings: { ...s.exportSettings },
+    antiFr: { ...s.antiFr, landmarks: null },
   };
 }
 
@@ -101,6 +115,13 @@ const initialGrid: GridSettings = {
   targetBlockScreenPx: 2,
   outputSizePx: 1024,
   gridOverride: null,
+};
+
+const initialAntiFr: AntiFrOptions = {
+  occlusion: { enabled: false, region: "eyes", style: "bar", strength: 0.5 },
+  warp: { enabled: false, strength: 0.5 },
+  cloak: { enabled: false, strength: 0.5 },
+  landmarks: null,
 };
 
 export const useStore = create<AppState>()(
@@ -150,8 +171,24 @@ export const useStore = create<AppState>()(
     circularMask: false,
     backgroundColor: "#0e0e12",
   },
+  antiFr: {
+    occlusion: { ...initialAntiFr.occlusion },
+    warp: { ...initialAntiFr.warp },
+    cloak: { ...initialAntiFr.cloak },
+    landmarks: null,
+  },
 
-  setSource: (bitmap, name = null) => set({ source: bitmap, sourceName: name }),
+  baselineEmbedding: null,
+  matchResult: null,
+
+  setSource: (bitmap, name = null) =>
+    set((s) => ({
+      source: bitmap,
+      sourceName: name,
+      baselineEmbedding: null,
+      matchResult: null,
+      antiFr: { ...s.antiFr, landmarks: null },
+    })),
   setCrop: (patch) => set((s) => ({ crop: { ...s.crop, ...patch } })),
   setGrid: (patch) => set((s) => ({ grid: { ...s.grid, ...patch } })),
   setRenderMode: (renderMode) => set({ renderMode }),
@@ -162,6 +199,10 @@ export const useStore = create<AppState>()(
   setColor: (patch) => set((s) => ({ color: { ...s.color, ...patch } })),
   setAdjust: (patch) => set((s) => ({ adjust: { ...s.adjust, ...patch } })),
   setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
+  setAntiFr: (patch) => set((s) => ({ antiFr: { ...s.antiFr, ...patch } })),
+  setLandmarks: (landmarks) => set((s) => ({ antiFr: { ...s.antiFr, landmarks } })),
+  setBaselineEmbedding: (baselineEmbedding) => set({ baselineEmbedding }),
+  setMatchResult: (matchResult) => set({ matchResult }),
 
   cropModalOpen: false,
   openCropModal: () => set({ cropModalOpen: true }),
@@ -197,6 +238,7 @@ export const useStore = create<AppState>()(
       color: { ...c.color, customPalette: [...c.color.customPalette] },
       adjust: { ...c.adjust },
       exportSettings: { ...c.exportSettings },
+      antiFr: { ...initialAntiFr, ...(c.antiFr ?? {}), landmarks: get().antiFr.landmarks },
     });
   },
   importPresets: (list) =>

@@ -23,5 +23,6 @@ export function currentRequest(requestedOutputPx?: number): RenderRequest {
     color: s.color,
     adjust: s.adjust,
     exportSettings: s.exportSettings,
+    antiFr: s.antiFr,
   };
 }
