@@ -18,11 +18,27 @@ async function frVerdict(page: Page): Promise<string> {
   return (await el.count()) > 0 ? el.first().innerText() : "";
 }
 
+/** Distinct sampled colors on the visible stage canvas. */
+function canvasDistinct(page: Page) {
+  return page.evaluate(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>(".stage__canvas")!;
+    const { data } = canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height);
+    const distinct = new Set<string>();
+    for (let i = 0; i < data.length; i += 4 * 17) distinct.add(`${data[i]},${data[i + 1]},${data[i + 2]}`);
+    return distinct.size;
+  });
+}
+
+async function overrideGrid(page: Page, value: string) {
+  await page.getByRole("button", { name: "Customize", exact: true }).click();
+  await page.locator(".grid-override input").check();
+  await page.getByRole("slider", { name: /^Grid/ }).fill(value);
+}
+
 test("occlusion bar blacks out the eye band without a model", async ({ page }) => {
   await page.goto("/");
   await upload(page);
 
-  // #given a baseline mosaic
   const blackFraction = () =>
     page.evaluate(() => {
       const canvas = document.querySelector<HTMLCanvasElement>(".stage__canvas")!;
@@ -45,7 +61,21 @@ test("occlusion bar blacks out the eye band without a model", async ({ page }) =
   await expect.poll(blackFraction, { timeout: 5000 }).toBeGreaterThan(before + 0.03);
 });
 
-test("FR measurement loads locally and the mosaic dial moves the match", async ({ page }) => {
+test("cloak perturbs a fine, full-color render", async ({ page }) => {
+  await page.goto("/");
+  await upload(page);
+  await overrideGrid(page, "128");
+  const before = await canvasDistinct(page);
+
+  // #when the experimental cloak is enabled on photo-like output
+  await page.getByRole("button", { name: "Privacy", exact: true }).click();
+  await page.getByText("Adversarial cloak (experimental)").click();
+
+  // #then its high-frequency texture raises the distinct-color count
+  await expect.poll(() => canvasDistinct(page), { timeout: 5000 }).toBeGreaterThan(before + 20);
+});
+
+test("FR measurement loads locally, then auto-harden defeats the match", async ({ page }) => {
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
@@ -60,18 +90,17 @@ test("FR measurement loads locally and the mosaic dial moves the match", async (
   await page.getByText("Measure FR matchability").click();
 
   // A near-1:1 grid keeps the face detectable — exercises the descriptor/distance path.
-  await page.getByRole("button", { name: "Customize", exact: true }).click();
-  await page.locator(".grid-override input").check();
-  await page.getByRole("slider", { name: /^Grid/ }).fill("128");
+  await overrideGrid(page, "128");
   await expect
     .poll(() => frVerdict(page), { timeout: 60_000 })
     .toMatch(/Likely matches you|Borderline/);
 
-  // Coarsening the grid degrades identity until the detector loses the face.
-  await page.getByRole("slider", { name: /^Grid/ }).fill("12");
+  // Auto-harden coarsens until the face is no longer matchable.
+  await page.getByRole("button", { name: /Auto-harden/ }).click();
   await expect
-    .poll(() => frVerdict(page), { timeout: 20_000 })
+    .poll(() => frVerdict(page), { timeout: 30_000 })
     .toMatch(/Unlikely to match|No face detected/);
+  await expect(page.getByText(/Coarsened to|still faintly matchable/)).toBeVisible();
 
   // Loading + running the model triggered no CSP violations or uncaught errors.
   expect(errors.filter((e) => /Content Security Policy|CSP/i.test(e))).toEqual([]);

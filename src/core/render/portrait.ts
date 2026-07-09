@@ -4,6 +4,7 @@ import { sampleGrid, type WarpConfig } from "../sampling";
 import { applyAdjustments } from "../adjust";
 import { applyColor } from "../colorize";
 import { applyOcclusion } from "../antifr/occlude";
+import { applyCloak, isPhotoLike } from "../antifr/cloak";
 import { renderSquare } from "./square";
 import { renderDot } from "./dot";
 import { renderRelief } from "./relief";
@@ -53,6 +54,11 @@ export function renderPortrait(ctx: Ctx2D, source: ImageBitmap, req: RenderReque
     renderCmyk(ctx, sample, req);
   } else {
     renderSquare(ctx, sample, req);
+  }
+
+  const { cloak, landmarks } = req.antiFr;
+  if (cloak.enabled && isPhotoLike(req.gridSize, req.color.mode)) {
+    applyCloak(ctx, size, cloak, landmarks);
   }
 
   ctx.restore();

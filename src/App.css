@@ -383,6 +383,11 @@ input[type="range"] {
   justify-content: center;
   gap: var(--space-2);
 }
+.btn--block {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-2);
+}
 
 .icon-btn {
   display: inline-flex;
