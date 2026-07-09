@@ -8,6 +8,7 @@ import { AdjustControls } from "@/components/AdjustControls";
 import { DisplayControls } from "@/components/DisplayControls";
 import { StyleControls } from "@/components/StyleControls";
 import { ColorControls } from "@/components/ColorControls";
+import { PrivacyControls } from "@/components/PrivacyControls";
 import { ExportBar } from "@/components/ExportBar";
 import { PreviewStage } from "@/components/PreviewStage";
 import { Icon } from "@/components/ui/Icon";
@@ -59,6 +60,7 @@ export default function App() {
           <ColorControls />
           <DisplayControls />
           <StyleControls />
+          <PrivacyControls />
           <ExportBar />
         </aside>
 

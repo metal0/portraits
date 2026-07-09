@@ -383,6 +383,11 @@ input[type="range"] {
   justify-content: center;
   gap: var(--space-2);
 }
+.btn--block {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-2);
+}
 
 .icon-btn {
   display: inline-flex;
@@ -679,6 +684,20 @@ input[type="range"] {
 }
 .meter--abstract {
   --meter-color: var(--accent-hover);
+}
+/* FR-match meter: matching the original is the bad outcome, so likely = danger. */
+.meter--match-likely {
+  --meter-color: var(--danger);
+}
+.meter--match-borderline {
+  --meter-color: var(--warn);
+}
+.meter--match-unlikely {
+  --meter-color: var(--ok);
+}
+.meter--loading {
+  color: var(--text-dim);
+  justify-content: center;
 }
 .meter__dot {
   width: 9px;

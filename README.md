@@ -26,7 +26,9 @@ Everything runs inside your browser tab. No server, no sign-up, no uploads. Your
 
 🔒 &nbsp;**Nothing leaves your browser.** All the work happens locally, so your original photo is never sent anywhere. Nobody — not us, not any cloud service — ever sees it.
 
-**What it can and can't do.** Portraits keeps your real photo off the internet and gives you an avatar that still reads as *you* to people who know you. It is **not** a face-recognition blocker: a mosaic a friend can recognize can often still be matched by software, since both rely on the same rough shapes. Fewer colors and a chunkier grid make it more private but less recognizable — Portraits gives you that dial, and where you set it is up to you.
+🛡️ &nbsp;**Measure it, don't guess.** Turn on any of the optional Privacy tools and Portraits runs real open-source face-detection and face-recognition models **locally in your browser** — nothing is uploaded — to score how well the mosaic still matches your original. Then it hands you the levers to push that score down: mask the eyes, subtly warp the face geometry, or optimize an adversarial cloak against the model until a recognizer loses you. You watch the number move.
+
+**What it can and can't do.** Portraits keeps your real photo off the internet and gives you an avatar that still reads as *you* to people who know you, plus an honest, measured readout of how matchable it is. It is still **not** a guarantee against every face-recognition system: a score is only as good as the model behind it, and the more you degrade the picture the less it looks like you. Portraits gives you the dial and the measurement — where you set it is up to you.
 
 ## How it works
 
@@ -43,6 +45,7 @@ Most tools make an avatar and *hope* it survives being resized. Portraits works 
 - ✂️ &nbsp;**Framing.** Crop to a square or circle, add a round mask, and pick a transparent or solid background.
 - 💾 &nbsp;**Presets.** Save a look you like, name it, and share it with others as a small file.
 - ⬇️ &nbsp;**Real downloads.** Export a PNG at 512, 1024, or 2048 pixels, or a crisp SVG vector (for the square and dot styles).
+- 🛡️ &nbsp;**Privacy tools (optional).** Mask the eyes, subtly warp the face geometry, or optimize an experimental adversarial cloak — and Portraits measures how well face recognition can still match your avatar, entirely on your machine, so you can dial it down. The ~7 MB model loads automatically the first time you turn any of them on.
 
 ---
 
@@ -76,6 +79,7 @@ npm run test:e2e   # Playwright against your local Chrome (no browser download)
 - Zustand for state
 - Canvas 2D with Web Workers (OffscreenCanvas) for rendering
 - Plain CSS with design tokens, no runtime UI dependencies
+- Optional face analysis via [face-api.js](https://github.com/vladmandic/face-api) (MIT), lazy-loaded so the base bundle stays tiny; its ~7 MB of models are served same-origin and never uploaded (the CSP forbids external calls)
 
 The image engine lives in [`src/core/`](src/core/) as pure, framework-agnostic functions, so it runs on the main thread or inside a worker and stays easy to unit-test on its own.
 

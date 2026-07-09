@@ -1,18 +1,24 @@
 import type { RenderRequest, SampledGrid } from "../types";
 import type { Ctx2D } from "../graphics";
-import { sampleGrid } from "../sampling";
+import { sampleGrid, type WarpConfig } from "../sampling";
 import { applyAdjustments } from "../adjust";
 import { applyColor } from "../colorize";
+import { applyOcclusion } from "../antifr/occlude";
+import { applyCloak, isPhotoLike } from "../antifr/cloak";
 import { renderSquare } from "./square";
 import { renderDot } from "./dot";
 import { renderRelief } from "./relief";
 import { renderAscii } from "./ascii";
 import { renderCmyk } from "./cmyk";
 
-/** Sample → adjust → colorize. Shared by canvas render and SVG export. */
+/** Sample → adjust → colorize → occlude. Shared by canvas render and SVG export. */
 export function computeFrame(source: ImageBitmap, req: RenderRequest): SampledGrid {
-  const adjusted = applyAdjustments(sampleGrid(source, req.crop, req.gridSize), req.adjust);
-  return applyColor(adjusted, req.color);
+  const { warp, occlusion, landmarks } = req.antiFr;
+  const warpConfig: WarpConfig | null =
+    warp.enabled && landmarks ? { strength: warp.strength, landmarks } : null;
+  const adjusted = applyAdjustments(sampleGrid(source, req.crop, req.gridSize, warpConfig), req.adjust);
+  const colored = applyColor(adjusted, req.color);
+  return applyOcclusion(colored, occlusion, landmarks);
 }
 
 /**
@@ -48,6 +54,11 @@ export function renderPortrait(ctx: Ctx2D, source: ImageBitmap, req: RenderReque
     renderCmyk(ctx, sample, req);
   } else {
     renderSquare(ctx, sample, req);
+  }
+
+  const { cloak, cloakField } = req.antiFr;
+  if (cloak.enabled && cloakField && isPhotoLike(req.gridSize, req.color.mode)) {
+    applyCloak(ctx, size, cloakField);
   }
 
   ctx.restore();

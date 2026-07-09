@@ -24,6 +24,7 @@ export function useRenderEngine(): void {
   const color = useStore((s) => s.color);
   const adjust = useStore((s) => s.adjust);
   const exportSettings = useStore((s) => s.exportSettings);
+  const antiFr = useStore((s) => s.antiFr);
   const bumpRender = useStore((s) => s.bumpRender);
   const setRenderPending = useStore((s) => s.setRenderPending);
 
@@ -52,6 +53,7 @@ export function useRenderEngine(): void {
         color,
         adjust,
         exportSettings,
+        antiFr,
       };
       renderToOutput(source, req);
       bumpRender();
@@ -72,6 +74,7 @@ export function useRenderEngine(): void {
     color,
     adjust,
     exportSettings,
+    antiFr,
     bumpRender,
     setRenderPending,
   ]);
