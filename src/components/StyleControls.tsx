@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStore } from "@/state/store";
 import { Section, Segmented, SliderField, Toggle, ColorField } from "./ui/Controls";
 import { Icon } from "./ui/Icon";
@@ -24,12 +24,12 @@ export function StyleControls() {
   const ref = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number | null>(null);
 
-  const cancelClose = () => {
+  const cancelClose = useCallback(() => {
     if (closeTimer.current !== null) {
       clearTimeout(closeTimer.current);
       closeTimer.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!optionsOpen) return;
@@ -49,20 +49,22 @@ export function StyleControls() {
       document.removeEventListener("pointerdown", onDown);
       cancelClose();
     };
-  }, [optionsOpen]);
+  }, [cancelClose, optionsOpen]);
+
+  const selectRenderMode = (mode: RenderMode) => {
+    cancelClose();
+    setOptionsOpen(true);
+    setRenderMode(mode);
+  };
 
   return (
     <Section icon="sliders" title="Style">
       <div ref={ref}>
-        <div
-          onPointerDown={() => {
-            cancelClose();
-            setOptionsOpen(true);
-          }}
-        >
+        <div>
           <Segmented<RenderMode>
+            label="Render style"
             value={renderMode}
-            onChange={setRenderMode}
+            onChange={selectRenderMode}
             options={[
               { value: "square", label: <Icon name="square" size={16} />, title: "Square" },
               { value: "dot", label: <Icon name="circle" size={16} />, title: "Dot" },
@@ -73,46 +75,48 @@ export function StyleControls() {
           />
         </div>
 
-        <div className={`style-opts${optionsOpen ? " is-open" : ""}`}>
-          <div className="style-opts__inner">
-            {renderMode === "square" && (
-              <>
-                <SliderField
-                  label="Gap"
-                  value={Math.round(square.gap * 100)}
-                  min={0}
-                  max={45}
-                  step={5}
-                  suffix="%"
-                  onChange={(v) => setSquare({ gap: v / 100 })}
-                />
-                <SliderField
-                  label="Rounded"
-                  value={Math.round(square.cornerRadius * 100)}
-                  min={0}
-                  max={50}
-                  step={5}
-                  suffix="%"
-                  onChange={(v) => setSquare({ cornerRadius: v / 100 })}
-                />
-                <Toggle
-                  label="Outline"
-                  checked={square.outline}
-                  onChange={(outline) => setSquare({ outline })}
-                />
-                {square.outline && (
-                  <ColorField
-                    label="Outline color"
-                    value={square.outlineColor}
-                    onChange={(outlineColor) => setSquare({ outlineColor })}
+        {optionsOpen && (
+          <div className="style-opts is-open">
+            <div className="style-opts__inner">
+              {renderMode === "square" && (
+                <>
+                  <SliderField
+                    label="Gap"
+                    value={Math.round(square.gap * 100)}
+                    min={0}
+                    max={45}
+                    step={5}
+                    suffix="%"
+                    onChange={(v) => setSquare({ gap: v / 100 })}
                   />
-                )}
-              </>
-            )}
+                  <SliderField
+                    label="Rounded"
+                    value={Math.round(square.cornerRadius * 100)}
+                    min={0}
+                    max={50}
+                    step={5}
+                    suffix="%"
+                    onChange={(v) => setSquare({ cornerRadius: v / 100 })}
+                  />
+                  <Toggle
+                    label="Outline"
+                    checked={square.outline}
+                    onChange={(outline) => setSquare({ outline })}
+                  />
+                  {square.outline && (
+                    <ColorField
+                      label="Outline color"
+                      value={square.outlineColor}
+                      onChange={(outlineColor) => setSquare({ outlineColor })}
+                    />
+                  )}
+                </>
+              )}
 
             {renderMode === "dot" && (
               <>
                 <Segmented<DotShape>
+                  label="Dot shape"
                   value={dot.dotShape}
                   onChange={(dotShape) => setDot({ dotShape })}
                   options={[
@@ -148,6 +152,7 @@ export function StyleControls() {
             {renderMode === "relief" && (
               <>
                 <Segmented<ReliefVariant>
+                  label="Relief style"
                   value={relief.variant}
                   onChange={(variant) => setRelief({ variant })}
                   options={[
@@ -222,6 +227,7 @@ export function StyleControls() {
               <div className="field">
                 <span className="field__label">Character set</span>
                 <Segmented<string>
+                  label="Character set"
                   value={ascii.ramp}
                   onChange={(ramp) => setAscii({ ramp })}
                   options={ASCII_RAMPS.map((r) => ({ value: r.ramp, label: r.name }))}
@@ -232,8 +238,9 @@ export function StyleControls() {
             {renderMode === "cmyk" && (
               <p className="field__label">Four-color halftone screen — looks best in full-color.</p>
             )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Section>
   );

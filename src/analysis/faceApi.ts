@@ -9,7 +9,10 @@ let modelsPromise: Promise<void> | null = null;
 /** Lazily import the (tfjs-bundled) library. tfjs inits its backend on first op. */
 async function getApi(): Promise<FaceApi> {
   if (!apiPromise) {
-    apiPromise = import("@vladmandic/face-api");
+    apiPromise = import("@vladmandic/face-api").catch((error: unknown) => {
+      apiPromise = null;
+      throw error;
+    });
   }
   return apiPromise;
 }
@@ -18,13 +21,18 @@ async function getApi(): Promise<FaceApi> {
 export function loadFaceModels(): Promise<void> {
   if (!modelsPromise) {
     modelsPromise = (async () => {
-      const faceapi = await getApi();
-      const url = import.meta.env.BASE_URL.replace(/\/$/, "") + "/models";
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(url),
-        faceapi.nets.faceLandmark68Net.loadFromUri(url),
-        faceapi.nets.faceRecognitionNet.loadFromUri(url),
-      ]);
+      try {
+        const faceapi = await getApi();
+        const url = import.meta.env.BASE_URL.replace(/\/$/, "") + "/models";
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(url),
+          faceapi.nets.faceLandmark68Net.loadFromUri(url),
+          faceapi.nets.faceRecognitionNet.loadFromUri(url),
+        ]);
+      } catch (error: unknown) {
+        modelsPromise = null;
+        throw error;
+      }
     })();
   }
   return modelsPromise;

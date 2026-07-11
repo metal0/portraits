@@ -39,12 +39,12 @@ Most tools make an avatar and *hope* it survives being resized. Portraits works 
 ## Features
 
 - 📐 &nbsp;**Size-aware grid.** Tell it where the avatar will live ("64px in Discord") and it picks the right level of chunkiness automatically.
-- 🎨 &nbsp;**Three looks.** Solid square blocks, a dotted "halftone" print style, or a raised 3D relief with soft shading.
+- 🎨 &nbsp;**Five looks.** Solid square blocks, dotted halftone, raised 3D relief, ASCII characters, or a four-color CMYK print screen.
 - 🌗 &nbsp;**Color or black-and-white**, with brightness and contrast controls plus one-click auto-enhance.
 - 🕹️ &nbsp;**Retro palettes.** 1-bit, grayscale, Game Boy, and Minecraft, or bring your own colors. (Uses Floyd–Steinberg dithering to fake more colors than you actually have.)
 - ✂️ &nbsp;**Framing.** Crop to a square or circle, add a round mask, and pick a transparent or solid background.
 - 💾 &nbsp;**Presets.** Save a look you like, name it, and share it with others as a small file.
-- ⬇️ &nbsp;**Real downloads.** Export a PNG at 512, 1024, or 2048 pixels, or a crisp SVG vector (for the square and dot styles).
+- ⬇️ &nbsp;**Real downloads.** Export a PNG at 512, 1024, 2048, or 4096 pixels; a crisp SVG vector for square, dot, and ASCII styles; or a three-size PNG ZIP.
 - 🛡️ &nbsp;**Privacy tools (optional).** Mask the eyes, subtly warp the face geometry, or optimize an experimental adversarial cloak — and Portraits measures how well face recognition can still match your avatar, entirely on your machine, so you can dial it down. The ~7 MB model loads automatically the first time you turn any of them on.
 
 ---
@@ -70,6 +70,7 @@ npm run dev        # http://localhost:5173
 npm run build      # type-check + production build into dist/
 npm run preview    # serve the production build
 npm run typecheck
+npm run lint
 npm run test:e2e   # Playwright against your local Chrome (no browser download)
 ```
 
@@ -77,7 +78,7 @@ npm run test:e2e   # Playwright against your local Chrome (no browser download)
 
 - Vite, React 19, and TypeScript
 - Zustand for state
-- Canvas 2D with Web Workers (OffscreenCanvas) for rendering
+- Canvas 2D for interactive previews, with OffscreenCanvas Web Worker exports
 - Plain CSS with design tokens, no runtime UI dependencies
 - Optional face analysis via [face-api.js](https://github.com/vladmandic/face-api) (MIT), lazy-loaded so the base bundle stays tiny; its ~7 MB of models are served same-origin and never uploaded (the CSP forbids external calls)
 

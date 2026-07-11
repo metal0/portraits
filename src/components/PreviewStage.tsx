@@ -5,10 +5,11 @@ import { getOutputCanvas } from "@/render/engine";
 import { ComparePreviews } from "./ComparePreviews";
 import { ReadabilityMeter } from "./ReadabilityMeter";
 import { AntiFrMeter } from "./AntiFrMeter";
+import { Icon } from "./ui/Icon";
 
 const PREVIEW_MAX = 512;
 
-export function PreviewStage(props: { onFile: (file: File) => void }) {
+export function PreviewStage(props: { onFile: (file: File) => void; onChooseFile: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -42,7 +43,7 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
 
   return (
     <main
-      className={`stage${dragging ? " stage--dragging" : ""}`}
+      className={`stage${source ? "" : " stage--empty"}${dragging ? " stage--dragging" : ""}`}
       onDragOver={(e) => {
         e.preventDefault();
         setDragging(true);
@@ -59,11 +60,17 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
             <div className="stage__canvas-wrap">
               <canvas
                 ref={canvasRef}
+                role="img"
+                aria-label="Rendered pixel mosaic portrait preview"
                 className={`stage__canvas${transparent ? " is-checker" : ""}${
                   pending ? " is-pending" : ""
                 }`}
               />
-              {pending && <div className="stage__updating">Updating…</div>}
+              {pending && (
+                <div className="stage__updating" role="status" aria-live="polite">
+                  Updating…
+                </div>
+              )}
             </div>
           </div>
           <ReadabilityMeter />
@@ -80,10 +87,17 @@ export function PreviewStage(props: { onFile: (file: File) => void }) {
             />
             <Readout value={`${plan.outputPx}²`} label="export" />
           </div>
-          <p className="stage__hint">Upload, drop, or paste a photo to begin.</p>
+          <p className="stage__hint">Choose, drop, or paste a photo to begin.</p>
+          <button
+            type="button"
+            className="btn btn--primary btn--icon stage__upload"
+            onClick={props.onChooseFile}
+          >
+            <Icon name="upload" size={16} /> Choose a photo
+          </button>
         </div>
       )}
-      {dragging && <div className="stage__drop-overlay">Drop image</div>}
+      {dragging && <div className="stage__drop-overlay" role="status">Drop image</div>}
     </main>
   );
 }

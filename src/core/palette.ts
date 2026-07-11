@@ -6,7 +6,7 @@ export function medianCut(cells: Cell[], n: number): RGB[] {
   if (cells.length === 0) return [[0, 0, 0]];
   const target = Math.max(1, Math.min(n, 256));
 
-  let boxes: RGB[][] = [cells.map((c) => [c.r, c.g, c.b] as RGB)];
+  const boxes: RGB[][] = [cells.map((c) => [c.r, c.g, c.b] as RGB)];
 
   while (boxes.length < target) {
     let widestIdx = -1;

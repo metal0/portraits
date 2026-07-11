@@ -20,7 +20,12 @@ function DitherPicker({
   return (
     <div className="field">
       <span className="field__label">Dither</span>
-      <Segmented<DitherMode> value={value} onChange={onChange} options={DITHER_OPTIONS} />
+      <Segmented<DitherMode>
+        label="Dither"
+        value={value}
+        onChange={onChange}
+        options={DITHER_OPTIONS}
+      />
     </div>
   );
 }
@@ -51,6 +56,7 @@ export function ColorControls() {
   return (
     <Section icon="palette" title="Color" collapsible defaultCollapsed>
       <Segmented<ColorMode>
+        label="Color mode"
         value={color.mode}
         onChange={(mode) => setColor({ mode })}
         options={[
@@ -96,6 +102,7 @@ export function ColorControls() {
       {color.mode === "palette" && (
         <>
           <Segmented<PaletteSource>
+            label="Palette source"
             value={color.paletteSource}
             onChange={(paletteSource) => setColor({ paletteSource })}
             options={[
@@ -106,6 +113,7 @@ export function ColorControls() {
 
           {color.paletteSource === "auto" && (
             <Segmented<string>
+              label="Palette size"
               value={String(color.paletteSize)}
               onChange={(v) => setColor({ paletteSize: Number(v) })}
               options={[2, 4, 8, 16].map((n) => ({ value: String(n), label: String(n) }))}

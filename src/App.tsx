@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useImageLoader } from "@/hooks/useImageLoader";
 import { useRenderEngine } from "@/hooks/useRenderEngine";
 import { useStore } from "@/state/store";
@@ -17,8 +17,10 @@ import "./App.css";
 const REPO_URL = "https://github.com/metal0/portraits";
 
 export default function App() {
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const { loadFile, error, loading } = useImageLoader();
   useRenderEngine();
+  const chooseImage = () => imageInputRef.current?.click();
 
   // Warn before an accidental reload/close loses the in-memory image + edits.
   useEffect(() => {
@@ -55,7 +57,11 @@ export default function App() {
 
       <div className="app__body">
         <aside className="panel panel--left">
-          <Uploader onFile={loadFile} error={error} loading={loading} />
+          <Uploader
+            error={error}
+            loading={loading}
+            onChooseFile={chooseImage}
+          />
           <AdjustControls />
           <ColorControls />
           <DisplayControls />
@@ -64,9 +70,20 @@ export default function App() {
           <ExportBar />
         </aside>
 
-        <PreviewStage onFile={loadFile} />
+        <PreviewStage onFile={loadFile} onChooseFile={chooseImage} />
       </div>
 
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/avif"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void loadFile(file);
+          event.target.value = "";
+        }}
+      />
       <CropModal />
     </div>
   );

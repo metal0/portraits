@@ -1,9 +1,14 @@
 import type { RenderRequest, SampledGrid } from "../types";
 
 const ALPHA_CUTOFF = 8;
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 function rgb(r: number, g: number, b: number): string {
   return `rgb(${r},${g},${b})`;
+}
+
+function svgColor(value: string): string {
+  return value.length === 7 && HEX_COLOR.test(value) ? value : "#000000";
 }
 
 function squareCells(sample: SampledGrid, req: RenderRequest, cellSize: number): string {
@@ -20,7 +25,9 @@ function squareCells(sample: SampledGrid, req: RenderRequest, cellSize: number):
     if (cell.a < ALPHA_CUTOFF) continue;
     const x = cell.gx * cellSize + halfGap;
     const y = cell.gy * cellSize + halfGap;
-    const stroke = outline ? ` stroke="${outlineColor}" stroke-width="${cellSize * 0.04}"` : "";
+    const stroke = outline
+      ? ` stroke="${svgColor(outlineColor)}" stroke-width="${cellSize * 0.04}"`
+      : "";
     parts.push(
       `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${size.toFixed(2)}" height="${size.toFixed(2)}"${rx} fill="${rgb(cell.r, cell.g, cell.b)}"${stroke}/>`,
     );
@@ -90,7 +97,7 @@ export function buildSvg(sample: SampledGrid, req: RenderRequest): string {
     : "";
   const bg = req.exportSettings.transparentBackground
     ? ""
-    : `<rect width="${S}" height="${S}" fill="${req.exportSettings.backgroundColor}"/>`;
+    : `<rect width="${S}" height="${S}" fill="${svgColor(req.exportSettings.backgroundColor)}"/>`;
 
   const cells =
     req.renderMode === "dot"

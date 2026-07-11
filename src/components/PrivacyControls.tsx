@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { useStore } from "@/state/store";
 import { Section, Segmented, SliderField, Toggle } from "./ui/Controls";
 import { currentRequest } from "@/render/buildRequest";
@@ -6,14 +6,16 @@ import { optimizeCloak } from "@/analysis/cloakOptimize";
 import { isPhotoLike } from "@/core/antifr/cloak";
 import type { OcclusionRegion, OcclusionStyle } from "@/core/types";
 
-export function PrivacyControls() {
+export function PrivacyControls(): ReactElement | null {
   const source = useStore((s) => s.source);
   const antiFr = useStore((s) => s.antiFr);
   const setAntiFr = useStore((s) => s.setAntiFr);
   const baseline = useStore((s) => s.baselineEmbedding);
   const gridSize = useStore((s) => s.effectiveGrid());
   const colorMode = useStore((s) => s.color.mode);
+  const renderPending = useStore((s) => s.renderPending);
   const [optimizing, setOptimizing] = useState(false);
+  const [optimizationError, setOptimizationError] = useState<string | null>(null);
 
   if (!source) return null;
 
@@ -22,18 +24,62 @@ export function PrivacyControls() {
 
   const runOptimize = async () => {
     const st = useStore.getState();
-    if (!st.source || !st.baselineEmbedding) return;
+    if (!st.source || !st.baselineEmbedding || st.renderPending) return;
+    const sourceAtStart = st.source;
+    const baselineAtStart = st.baselineEmbedding;
+    const sourceRevisionAtStart = st.sourceRevision;
+    const renderVersionAtStart = st.renderVersion;
+    const requestAtStart = currentRequest();
+    const strengthAtStart = st.antiFr.cloak.strength;
+    const displaySizeAtStart = st.grid.displaySizePx;
+    const outputSizeAtStart = st.grid.outputSizePx;
+
+    const inputsAreCurrent = (): boolean => {
+      const current = useStore.getState();
+      const request = currentRequest();
+      return (
+        current.source === sourceAtStart &&
+        current.sourceRevision === sourceRevisionAtStart &&
+        current.baselineEmbedding === baselineAtStart &&
+        current.renderVersion === renderVersionAtStart &&
+        !current.renderPending &&
+        current.antiFr.cloak.enabled &&
+        current.antiFr.cloak.strength === strengthAtStart &&
+        current.grid.displaySizePx === displaySizeAtStart &&
+        current.grid.outputSizePx === outputSizeAtStart &&
+        request.crop === requestAtStart.crop &&
+        request.gridSize === requestAtStart.gridSize &&
+        request.outputSizePx === requestAtStart.outputSizePx &&
+        request.renderMode === requestAtStart.renderMode &&
+        request.square === requestAtStart.square &&
+        request.dot === requestAtStart.dot &&
+        request.relief === requestAtStart.relief &&
+        request.ascii === requestAtStart.ascii &&
+        request.color === requestAtStart.color &&
+        request.adjust === requestAtStart.adjust &&
+        request.exportSettings === requestAtStart.exportSettings &&
+        request.antiFr === requestAtStart.antiFr
+      );
+    };
+
+    setOptimizationError(null);
     setOptimizing(true);
     try {
       const field = await optimizeCloak(
-        st.source,
-        st.baselineEmbedding,
-        currentRequest(),
-        st.antiFr.cloak.strength,
-        st.grid.displaySizePx,
-        st.grid.outputSizePx,
+        sourceAtStart,
+        baselineAtStart,
+        requestAtStart,
+        strengthAtStart,
+        displaySizeAtStart,
+        outputSizeAtStart,
       );
-      if (field) setAntiFr({ cloak: { ...st.antiFr.cloak, enabled: true }, cloakField: field });
+      if (field && inputsAreCurrent()) useStore.getState().setAntiFr({ cloakField: field });
+    } catch (error: unknown) {
+      if (inputsAreCurrent()) {
+        setOptimizationError(
+          error instanceof Error ? error.message : "Cloak optimization failed. Try again.",
+        );
+      }
     } finally {
       setOptimizing(false);
     }
@@ -55,6 +101,7 @@ export function PrivacyControls() {
       {occlusion.enabled && (
         <>
           <Segmented<OcclusionRegion>
+            label="Occlusion region"
             value={occlusion.region}
             onChange={(region) => setAntiFr({ occlusion: { ...occlusion, region } })}
             options={[
@@ -63,6 +110,7 @@ export function PrivacyControls() {
             ]}
           />
           <Segmented<OcclusionStyle>
+            label="Occlusion style"
             value={occlusion.style}
             onChange={(style) => setAntiFr({ occlusion: { ...occlusion, style } })}
             options={[
@@ -128,15 +176,23 @@ export function PrivacyControls() {
               type="button"
               className="btn btn--primary btn--block"
               onClick={runOptimize}
-              disabled={optimizing || !baseline}
+              disabled={optimizing || !baseline || renderPending}
+              aria-busy={optimizing}
             >
               {optimizing ? "Optimizing…" : cloakField ? "Re-optimize cloak" : "Optimize cloak"}
             </button>
-            <p className="field__label">
-              {cloakField
+            <p className="field__label" role="status" aria-live="polite">
+              {optimizing
+                ? "Optimizing the cloak locally…"
+                : cloakField
                 ? "Cloak baked in — watch the meter. Model-specific; an arms race like a CAPTCHA."
                 : "Searches for a perturbation that lowers the match score (~10s). Watch the meter."}
             </p>
+            {optimizationError && (
+              <p className="field__label" role="alert">
+                Cloak optimization failed: {optimizationError}
+              </p>
+            )}
           </>
         ) : (
           <p className="field__label">

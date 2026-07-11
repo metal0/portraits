@@ -9,6 +9,8 @@ import type {
   CustomPreset,
   DotOptions,
   ExportSettings,
+  FaceAnalysisState,
+  FaceAnalysisStatus,
   FaceLandmarks,
   GridSettings,
   MatchResult,
@@ -19,11 +21,19 @@ import type {
 } from "@/core/types";
 import { recommendGrid, planRender, type RenderPlan } from "@/core/grid";
 import { NEUTRAL_ADJUST } from "@/core/adjust";
+import {
+  MAX_PALETTE_COLORS,
+  MAX_PRESETS,
+  normalizePresetName,
+  normalizeStoredPresets,
+} from "@/core/presets";
 
 interface AppState {
   /** Loaded source image; null until the user provides one. */
   source: ImageBitmap | null;
   sourceName: string | null;
+  /** Changes for every source assignment, including same-sized replacements. */
+  sourceRevision: number;
 
   crop: Crop;
   grid: GridSettings;
@@ -41,6 +51,8 @@ interface AppState {
   baselineEmbedding: Float32Array | null;
   /** Latest measurement of the rendered mosaic vs the original; session-only. */
   matchResult: MatchResult | null;
+  /** Explicit local face-analysis lifecycle; session-only, never persisted. */
+  faceAnalysis: FaceAnalysisState;
 
   /** User-saved presets, persisted to localStorage. */
   presets: CustomPreset[];
@@ -65,6 +77,8 @@ interface AppState {
   setLandmarks: (landmarks: FaceLandmarks | null) => void;
   setBaselineEmbedding: (embedding: Float32Array | null) => void;
   setMatchResult: (result: MatchResult | null) => void;
+  setFaceAnalysisStatus: (status: FaceAnalysisStatus, error: string | null) => void;
+  retryFaceAnalysis: () => void;
 
   /** Bumped after each engine render so consumers can redraw. */
   renderVersion: number;
@@ -125,11 +139,31 @@ const initialAntiFr: AntiFrOptions = {
   landmarks: null,
 };
 
+const initialFaceAnalysis: FaceAnalysisState = {
+  status: "idle",
+  error: null,
+  retryVersion: 0,
+};
+
+function clearCloakField(antiFr: AntiFrOptions): AntiFrOptions {
+  return antiFr.cloakField ? { ...antiFr, cloakField: null } : antiFr;
+}
+
+function normalizePersistedState(value: unknown): Pick<AppState, "presets"> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return { presets: [] };
+  }
+
+  const persisted = value as Record<string, unknown>;
+  return { presets: normalizeStoredPresets(persisted.presets) };
+}
+
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       source: null,
       sourceName: null,
+      sourceRevision: 0,
 
   crop: initialCrop,
   grid: initialGrid,
@@ -182,29 +216,100 @@ export const useStore = create<AppState>()(
 
   baselineEmbedding: null,
   matchResult: null,
+  faceAnalysis: { ...initialFaceAnalysis },
 
   setSource: (bitmap, name = null) =>
     set((s) => ({
       source: bitmap,
       sourceName: name,
+      sourceRevision: s.sourceRevision + 1,
       baselineEmbedding: null,
       matchResult: null,
+      faceAnalysis: {
+        status: "idle",
+        error: null,
+        retryVersion: s.faceAnalysis.retryVersion,
+      },
       antiFr: { ...s.antiFr, landmarks: null, cloakField: null },
     })),
-  setCrop: (patch) => set((s) => ({ crop: { ...s.crop, ...patch } })),
-  setGrid: (patch) => set((s) => ({ grid: { ...s.grid, ...patch } })),
-  setRenderMode: (renderMode) => set({ renderMode }),
-  setSquare: (patch) => set((s) => ({ square: { ...s.square, ...patch } })),
-  setDot: (patch) => set((s) => ({ dot: { ...s.dot, ...patch } })),
-  setRelief: (patch) => set((s) => ({ relief: { ...s.relief, ...patch } })),
-  setAscii: (patch) => set((s) => ({ ascii: { ...s.ascii, ...patch } })),
-  setColor: (patch) => set((s) => ({ color: { ...s.color, ...patch } })),
-  setAdjust: (patch) => set((s) => ({ adjust: { ...s.adjust, ...patch } })),
-  setExport: (patch) => set((s) => ({ exportSettings: { ...s.exportSettings, ...patch } })),
-  setAntiFr: (patch) => set((s) => ({ antiFr: { ...s.antiFr, ...patch } })),
+  setCrop: (patch) =>
+    set((s) => {
+      const crop = { ...s.crop, ...patch };
+      const changed =
+        crop.x !== s.crop.x ||
+        crop.y !== s.crop.y ||
+        crop.scale !== s.crop.scale ||
+        crop.rotation !== s.crop.rotation;
+      if (!changed) return { crop };
+      return {
+        crop,
+        baselineEmbedding: null,
+        matchResult: null,
+        faceAnalysis: {
+          status: "idle",
+          error: null,
+          retryVersion: s.faceAnalysis.retryVersion,
+        },
+        antiFr: { ...s.antiFr, landmarks: null, cloakField: null },
+      };
+    }),
+  setGrid: (patch) =>
+    set((s) => ({ grid: { ...s.grid, ...patch }, antiFr: clearCloakField(s.antiFr) })),
+  setRenderMode: (renderMode) =>
+    set((s) => ({ renderMode, antiFr: clearCloakField(s.antiFr) })),
+  setSquare: (patch) =>
+    set((s) => ({ square: { ...s.square, ...patch }, antiFr: clearCloakField(s.antiFr) })),
+  setDot: (patch) =>
+    set((s) => ({ dot: { ...s.dot, ...patch }, antiFr: clearCloakField(s.antiFr) })),
+  setRelief: (patch) =>
+    set((s) => ({ relief: { ...s.relief, ...patch }, antiFr: clearCloakField(s.antiFr) })),
+  setAscii: (patch) =>
+    set((s) => ({ ascii: { ...s.ascii, ...patch }, antiFr: clearCloakField(s.antiFr) })),
+  setColor: (patch) =>
+    set((s) => ({
+      color: {
+        ...s.color,
+        ...patch,
+        ...(patch.customPalette
+          ? { customPalette: patch.customPalette.slice(0, MAX_PALETTE_COLORS) }
+          : {}),
+      },
+      antiFr: clearCloakField(s.antiFr),
+    })),
+  setAdjust: (patch) =>
+    set((s) => ({ adjust: { ...s.adjust, ...patch }, antiFr: clearCloakField(s.antiFr) })),
+  setExport: (patch) =>
+    set((s) => ({
+      exportSettings: { ...s.exportSettings, ...patch },
+      antiFr: clearCloakField(s.antiFr),
+    })),
+  setAntiFr: (patch) =>
+    set((s) => {
+      const antiFr = { ...s.antiFr, ...patch };
+      const changesCloakInput =
+        patch.occlusion !== undefined || patch.warp !== undefined || patch.cloak !== undefined;
+      const carriesCloakField = Object.prototype.hasOwnProperty.call(patch, "cloakField");
+      return {
+        antiFr:
+          changesCloakInput && !carriesCloakField ? { ...antiFr, cloakField: null } : antiFr,
+      };
+    }),
   setLandmarks: (landmarks) => set((s) => ({ antiFr: { ...s.antiFr, landmarks } })),
   setBaselineEmbedding: (baselineEmbedding) => set({ baselineEmbedding }),
   setMatchResult: (matchResult) => set({ matchResult }),
+  setFaceAnalysisStatus: (status, error) =>
+    set((s) => ({ faceAnalysis: { ...s.faceAnalysis, status, error } })),
+  retryFaceAnalysis: () =>
+    set((s) => ({
+      baselineEmbedding: null,
+      matchResult: null,
+      faceAnalysis: {
+        status: "idle",
+        error: null,
+        retryVersion: s.faceAnalysis.retryVersion + 1,
+      },
+      antiFr: { ...s.antiFr, landmarks: null },
+    })),
 
   cropModalOpen: false,
   openCropModal: () => set({ cropModalOpen: true }),
@@ -217,14 +322,24 @@ export const useStore = create<AppState>()(
   setRenderPending: (renderPending) => set({ renderPending }),
 
   presets: [],
-  saveCurrentAsPreset: (name) =>
-    set((s) => ({ presets: [...s.presets, { id: newId(), name, config: snapshot(s) }] })),
+  saveCurrentAsPreset: (name) => {
+    const normalizedName = normalizePresetName(name);
+    if (!normalizedName || get().presets.length >= MAX_PRESETS) return;
+    set((s) => ({
+      presets: [...s.presets, { id: newId(), name: normalizedName, config: snapshot(s) }],
+    }));
+  },
   updatePreset: (id) =>
     set((s) => ({
       presets: s.presets.map((p) => (p.id === id ? { ...p, config: snapshot(s) } : p)),
     })),
-  renamePreset: (id, name) =>
-    set((s) => ({ presets: s.presets.map((p) => (p.id === id ? { ...p, name } : p)) })),
+  renamePreset: (id, name) => {
+    const normalizedName = normalizePresetName(name);
+    if (!normalizedName) return;
+    set((s) => ({
+      presets: s.presets.map((p) => (p.id === id ? { ...p, name: normalizedName } : p)),
+    }));
+  },
   deletePreset: (id) => set((s) => ({ presets: s.presets.filter((p) => p.id !== id) })),
   applyPreset: (id) => {
     const preset = get().presets.find((p) => p.id === id);
@@ -244,7 +359,14 @@ export const useStore = create<AppState>()(
     });
   },
   importPresets: (list) =>
-    set((s) => ({ presets: [...s.presets, ...list.map((p) => ({ ...p, id: newId() }))] })),
+    set((s) => ({
+      presets: [
+        ...s.presets,
+        ...list
+          .slice(0, Math.max(0, MAX_PRESETS - s.presets.length))
+          .map((p) => ({ ...p, id: newId() })),
+      ],
+    })),
 
       effectiveGrid: () => {
         const { grid, renderMode, square } = get();
@@ -263,8 +385,13 @@ export const useStore = create<AppState>()(
     }),
     {
       name: "portraits-store",
-      version: 1,
+      version: 2,
       partialize: (s) => ({ presets: s.presets }),
+      migrate: (persistedState) => normalizePersistedState(persistedState),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...normalizePersistedState(persistedState),
+      }),
     },
   ),
 );
