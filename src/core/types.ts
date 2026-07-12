@@ -180,6 +180,22 @@ export interface MatchResult {
   detectionScore: number;
 }
 
+export type FaceAnalysisStatus =
+  | "idle"
+  | "loading"
+  | "no-face"
+  | "measuring"
+  | "ready"
+  | "error";
+
+/** Session-only lifecycle state for local face analysis. */
+export interface FaceAnalysisState {
+  status: FaceAnalysisStatus;
+  error: string | null;
+  /** Incremented when the user retries a failed analysis. */
+  retryVersion: number;
+}
+
 export interface DisplayPreset {
   displaySizePx: number;
   targetBlockScreenPx: number;

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
 
 export function Section(props: {
@@ -77,21 +77,46 @@ export interface SegmentedOption<T extends string> {
 }
 
 export function Segmented<T extends string>(props: {
+  label: string;
   value: T;
   options: SegmentedOption<T>[];
   onChange: (value: T) => void;
 }) {
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (index + 1) % props.options.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (index - 1 + props.options.length) % props.options.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = props.options.length - 1;
+    }
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    props.onChange(props.options[nextIndex].value);
+    const buttons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+      ".segmented__btn",
+    );
+    buttons?.[nextIndex]?.focus();
+  };
+
   return (
-    <div className="segmented" role="tablist">
-      {props.options.map((opt) => (
+    <div className="segmented" role="radiogroup" aria-label={props.label}>
+      {props.options.map((opt, index) => (
         <button
           key={opt.value}
           type="button"
-          role="tab"
+          role="radio"
           title={opt.title}
-          aria-selected={props.value === opt.value}
+          aria-label={opt.title}
+          aria-checked={props.value === opt.value}
+          tabIndex={props.value === opt.value ? 0 : -1}
           className={`segmented__btn${props.value === opt.value ? " is-active" : ""}`}
           onClick={() => props.onChange(opt.value)}
+          onKeyDown={(event) => onKeyDown(event, index)}
         >
           {opt.label}
         </button>

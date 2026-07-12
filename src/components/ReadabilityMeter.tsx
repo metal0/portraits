@@ -15,15 +15,15 @@ export function ReadabilityMeter() {
   const source = useStore((s) => s.source);
   const renderVersion = useStore((s) => s.renderVersion);
   const displayPx = useStore((s) => s.grid.displaySizePx);
-  const [res, setRes] = useState<ReadabilityResult | null>(null);
+  const [analysis, setAnalysis] = useState<{
+    source: ImageBitmap;
+    result: ReadabilityResult;
+  } | null>(null);
 
   // Debounced + driven off completed renders only: reads the settled canvas so
   // preset changes don't flash transient verdicts computed from a stale frame.
   useEffect(() => {
-    if (!source) {
-      setRes(null);
-      return;
-    }
+    if (!source) return;
     const id = window.setTimeout(() => {
       const st = useStore.getState();
       const size = Math.max(16, Math.min(128, Math.round(st.grid.displaySizePx)));
@@ -32,17 +32,26 @@ export function ReadabilityMeter() {
       ctx.imageSmoothingQuality = "high";
       ctx.clearRect(0, 0, size, size);
       ctx.drawImage(getOutputCanvas(st.effectivePlan().previewPx), 0, 0, size, size);
-      setRes(analyzeReadability(ctx.getImageData(0, 0, size, size).data, size));
+      setAnalysis({
+        source,
+        result: analyzeReadability(ctx.getImageData(0, 0, size, size).data, size),
+      });
     }, 450);
     return () => window.clearTimeout(id);
   }, [renderVersion, source]);
 
-  if (!source || !res) return null;
+  if (!source || analysis?.source !== source) return null;
+  const res = analysis.result;
 
   const title = `contrast ${(res.contrast * 100) | 0}% · detail ${(res.detail * 100) | 0}% · ${res.clusters} tones`;
 
   return (
-    <div className={`meter meter--${SLUG[res.verdict]}`} title={title}>
+    <div
+      className={`meter meter--${SLUG[res.verdict]}`}
+      title={title}
+      role="status"
+      aria-live="polite"
+    >
       <span className="meter__dot" aria-hidden />
       <span className="meter__label">Reads at {displayPx}px</span>
       <span className="meter__verdict">{res.verdict}</span>

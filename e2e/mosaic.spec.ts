@@ -47,7 +47,7 @@ async function canvasStats(page: Page) {
 test("renders and stays interactive", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Pixel Mosaic Portrait" })).toBeVisible();
-  await expect(page.getByText(/Upload, drop, or paste a photo/)).toBeVisible();
+  await expect(page.getByText(/Choose, drop, or paste a photo/)).toBeVisible();
 
   await upload(page);
 
@@ -72,7 +72,7 @@ test("switching render mode re-renders", async ({ page }) => {
   await upload(page);
   const before = await canvasStats(page);
 
-  await page.getByRole("tab", { name: "Dot" }).click();
+  await page.getByRole("radio", { name: "Dot" }).click();
   await expect
     .poll(async () => (await canvasStats(page)).distinct)
     .not.toBe(before.distinct);
@@ -83,7 +83,7 @@ test("grayscale reduces to neutral tones", async ({ page }) => {
   await upload(page);
 
   await expand(page, "Color");
-  await page.getByRole("tab", { name: "Gray" }).click();
+  await page.getByRole("radio", { name: "Gray" }).click();
   const coloredPixels = () =>
     page.evaluate(() => {
       const canvas = document.querySelector<HTMLCanvasElement>(".stage__canvas")!;
@@ -177,9 +177,9 @@ test("palette mode quantizes to few colors", async ({ page }) => {
   await upload(page);
 
   await expand(page, "Color");
-  await page.getByRole("tab", { name: "Palette" }).click();
-  await page.getByRole("tab", { name: "Auto" }).click();
-  await page.getByRole("tab", { name: "4", exact: true }).click();
+  await page.getByRole("radio", { name: "Palette" }).click();
+  await page.getByRole("radio", { name: "Auto" }).click();
+  await page.getByRole("radio", { name: "4", exact: true }).click();
 
   // 4-color palette + anti-aliased tile edges → still a small color count.
   await expect
@@ -191,10 +191,10 @@ test("dithering changes the pixel layout", async ({ page }) => {
   await page.goto("/");
   await upload(page);
   await expand(page, "Color");
-  await page.getByRole("tab", { name: "B/W" }).click();
+  await page.getByRole("radio", { name: "B/W" }).click();
   const flat = await canvasStats(page);
 
-  await page.getByRole("tab", { name: "Bayer" }).click();
+  await page.getByRole("radio", { name: "Bayer" }).click();
   await expect
     .poll(async () => (await canvasStats(page)).variance)
     .not.toBe(flat.variance);
@@ -204,12 +204,12 @@ test("ascii and cmyk modes render", async ({ page }) => {
   await page.goto("/");
   await upload(page);
 
-  await page.getByRole("tab", { name: "ASCII" }).click();
+  await page.getByRole("radio", { name: "ASCII" }).click();
   await expect
     .poll(async () => (await canvasStats(page)).variance, { timeout: 5000 })
     .toBeGreaterThan(15);
 
-  await page.getByRole("tab", { name: "CMYK" }).click();
+  await page.getByRole("radio", { name: "CMYK" }).click();
   await expect
     .poll(async () => (await canvasStats(page)).distinct, { timeout: 5000 })
     .toBeGreaterThan(10);
@@ -219,13 +219,13 @@ test("relief mode renders all variants", async ({ page }) => {
   await page.goto("/");
   await upload(page);
 
-  await page.getByRole("tab", { name: "Relief" }).click();
+  await page.getByRole("radio", { name: "Relief" }).click();
   await expect
     .poll(async () => (await canvasStats(page)).variance, { timeout: 5000 })
     .toBeGreaterThan(20);
   const raised = await canvasStats(page);
 
-  await page.getByRole("tab", { name: "Iso" }).click();
+  await page.getByRole("radio", { name: "Iso" }).click();
   await expect
     .poll(async () => (await canvasStats(page)).distinct)
     .not.toBe(raised.distinct);
@@ -236,15 +236,15 @@ test("presets save, persist, apply, and delete", async ({ page }) => {
   await upload(page);
 
   // Distinctive config, then save as a preset (via the prompt dialog).
-  await page.getByRole("tab", { name: "Dot" }).click();
+  await page.getByRole("radio", { name: "Dot" }).click();
   page.once("dialog", (d) => d.accept("My Dot"));
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("button", { name: "My Dot" })).toBeVisible();
 
   // Change away, then applying the preset restores Dot mode.
-  await page.getByRole("tab", { name: "Relief" }).click();
+  await page.getByRole("radio", { name: "Relief" }).click();
   await page.getByRole("button", { name: "My Dot" }).click();
-  await expect(page.getByRole("tab", { name: "Dot" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("radio", { name: "Dot" })).toHaveAttribute("aria-checked", "true");
 
   // Persists across reload (localStorage).
   await page.reload();

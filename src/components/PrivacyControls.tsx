@@ -1,50 +1,43 @@
-import { useState } from "react";
-import { useStore } from "@/state/store";
-import { Section, Segmented, SliderField, Toggle } from "./ui/Controls";
-import { currentRequest } from "@/render/buildRequest";
-import { optimizeCloak } from "@/analysis/cloakOptimize";
+import type { ReactElement } from "react";
 import { isPhotoLike } from "@/core/antifr/cloak";
 import type { OcclusionRegion, OcclusionStyle } from "@/core/types";
+import { useAutoCloak, type AutoCloakStatus } from "@/hooks/useAutoCloak";
+import { useStore } from "@/state/store";
+import { Section, Segmented, SliderField, Toggle } from "./ui/Controls";
 
-export function PrivacyControls() {
+function cloakStatusMessage(status: AutoCloakStatus, applying: boolean): string {
+  if (applying) return "Applying the optimized cloak to the latest preview…";
+  if (status === "optimizing") return "Optimizing the cloak automatically…";
+  if (status === "ready") {
+    return "Cloak optimized and applied automatically. Model-specific; treat it as a measured guide.";
+  }
+  if (status === "unavailable") {
+    return "Automatic optimization needs a detected source face. Retry face analysis if it failed.";
+  }
+  return "Automatic optimization starts after the latest render and face measurement settle.";
+}
+
+export function PrivacyControls(): ReactElement | null {
+  const autoCloak = useAutoCloak();
   const source = useStore((s) => s.source);
   const antiFr = useStore((s) => s.antiFr);
   const setAntiFr = useStore((s) => s.setAntiFr);
-  const baseline = useStore((s) => s.baselineEmbedding);
   const gridSize = useStore((s) => s.effectiveGrid());
   const colorMode = useStore((s) => s.color.mode);
-  const [optimizing, setOptimizing] = useState(false);
+  const renderPending = useStore((s) => s.renderPending);
 
   if (!source) return null;
 
   const { occlusion, warp, cloak, cloakField, landmarks } = antiFr;
   const cloakActive = isPhotoLike(gridSize, colorMode);
-
-  const runOptimize = async () => {
-    const st = useStore.getState();
-    if (!st.source || !st.baselineEmbedding) return;
-    setOptimizing(true);
-    try {
-      const field = await optimizeCloak(
-        st.source,
-        st.baselineEmbedding,
-        currentRequest(),
-        st.antiFr.cloak.strength,
-        st.grid.displaySizePx,
-        st.grid.outputSizePx,
-      );
-      if (field) setAntiFr({ cloak: { ...st.antiFr.cloak, enabled: true }, cloakField: field });
-    } finally {
-      setOptimizing(false);
-    }
-  };
+  const applyingCloak = autoCloak.status === "ready" && renderPending && cloakField !== null;
 
   return (
     <Section icon="shield" title="Privacy" collapsible defaultCollapsed>
       <p className="field__label">
-        Reduces how well face recognition can match this avatar to you. Turning on any tool loads a
-        ~7&nbsp;MB face model locally (one time, nothing is uploaded) and scores the result above the
-        preview — a guide, not a guarantee against every system.
+        Reduces how well face recognition can match this avatar to you. A ~7&nbsp;MB face model
+        preloads locally in the background after the page opens; nothing is uploaded. Turning on a
+        tool scores the result above the preview — a guide, not a guarantee against every system.
       </p>
 
       <Toggle
@@ -55,6 +48,7 @@ export function PrivacyControls() {
       {occlusion.enabled && (
         <>
           <Segmented<OcclusionRegion>
+            label="Occlusion region"
             value={occlusion.region}
             onChange={(region) => setAntiFr({ occlusion: { ...occlusion, region } })}
             options={[
@@ -63,6 +57,7 @@ export function PrivacyControls() {
             ]}
           />
           <Segmented<OcclusionStyle>
+            label="Occlusion style"
             value={occlusion.style}
             onChange={(style) => setAntiFr({ occlusion: { ...occlusion, style } })}
             options={[
@@ -109,7 +104,11 @@ export function PrivacyControls() {
         label="Adversarial cloak (experimental)"
         checked={cloak.enabled}
         onChange={(enabled) =>
-          setAntiFr(enabled ? { cloak: { ...cloak, enabled } } : { cloak: { ...cloak, enabled }, cloakField: null })
+          setAntiFr(
+            enabled
+              ? { cloak: { ...cloak, enabled } }
+              : { cloak: { ...cloak, enabled }, cloakField: null },
+          )
         }
       />
       {cloak.enabled &&
@@ -124,19 +123,29 @@ export function PrivacyControls() {
               suffix="%"
               onChange={(v) => setAntiFr({ cloak: { ...cloak, strength: v / 100 } })}
             />
-            <button
-              type="button"
-              className="btn btn--primary btn--block"
-              onClick={runOptimize}
-              disabled={optimizing || !baseline}
-            >
-              {optimizing ? "Optimizing…" : cloakField ? "Re-optimize cloak" : "Optimize cloak"}
-            </button>
-            <p className="field__label">
-              {cloakField
-                ? "Cloak baked in — watch the meter. Model-specific; an arms race like a CAPTCHA."
-                : "Searches for a perturbation that lowers the match score (~10s). Watch the meter."}
-            </p>
+            {autoCloak.status === "error" ? (
+              <>
+                <p className="field__label" role="alert">
+                  Automatic cloak optimization failed: {autoCloak.error}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--block"
+                  onClick={autoCloak.retry}
+                >
+                  Retry cloak optimization
+                </button>
+              </>
+            ) : (
+              <p
+                className="field__label"
+                role="status"
+                aria-live="polite"
+                aria-busy={autoCloak.status === "optimizing"}
+              >
+                {cloakStatusMessage(autoCloak.status, applyingCloak)}
+              </p>
+            )}
           </>
         ) : (
           <p className="field__label">

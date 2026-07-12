@@ -8,6 +8,10 @@ const FIELD = 14;
 const ITERS = 26;
 const UNDETECTED_DISTANCE = 2;
 
+function assertNotAborted(signal: AbortSignal): void {
+  if (signal.aborted) throw new DOMException("Cloak optimization aborted", "AbortError");
+}
+
 /**
  * Black-box SPSA search for a subtle perturbation field that maximizes the
  * bundled model's descriptor distance from the baseline. Uses the model itself
@@ -21,13 +25,15 @@ export async function optimizeCloak(
   strength: number,
   displaySizePx: number,
   outputSizePx: number,
-): Promise<CloakField | null> {
+  signal: AbortSignal,
+): Promise<CloakField> {
+  assertNotAborted(signal);
   const px = planRender(baseReq.gridSize, displaySizePx, outputSizePx).previewPx;
   const canvas = document.createElement("canvas");
   canvas.width = px;
   canvas.height = px;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return null;
+  if (!ctx) throw new Error("Failed to acquire cloak optimization canvas");
 
   // Render the current look once, with no cloak, as the fixed base image.
   const req: RenderRequest = {
@@ -36,6 +42,7 @@ export async function optimizeCloak(
     antiFr: { ...baseReq.antiFr, cloak: { ...baseReq.antiFr.cloak, enabled: false }, cloakField: null },
   };
   renderPortrait(ctx, source, req);
+  assertNotAborted(signal);
   const base = ctx.getImageData(0, 0, px, px);
 
   const dim = FIELD * FIELD * 3;
@@ -43,10 +50,12 @@ export async function optimizeCloak(
   const clip = (v: number): number => (v < -budget ? -budget : v > budget ? budget : v);
 
   const evalDist = async (data: Float32Array): Promise<number> => {
+    assertNotAborted(signal);
     const img = new ImageData(new Uint8ClampedArray(base.data), px, px);
     addField(img.data, px, px, { data, size: FIELD });
     ctx.putImageData(img, 0, 0);
     const res = await analyzeFace(canvas);
+    assertNotAborted(signal);
     return res ? faceDistance(baseline, res.descriptor) : UNDETECTED_DISTANCE;
   };
 
@@ -57,6 +66,7 @@ export async function optimizeCloak(
   const a = budget * 0.6;
   const c = budget * 0.5;
   for (let k = 0; k < ITERS; k++) {
+    assertNotAborted(signal);
     const delta = new Float32Array(dim);
     for (let i = 0; i < dim; i++) delta[i] = Math.random() < 0.5 ? -1 : 1;
 
@@ -67,6 +77,7 @@ export async function optimizeCloak(
       minus[i] = clip(f[i] - c * delta[i]);
     }
     const lp = await evalDist(plus);
+    assertNotAborted(signal);
     const lm = await evalDist(minus);
     if (lp > bestDist) {
       bestDist = lp;
@@ -81,5 +92,6 @@ export async function optimizeCloak(
     if (bestDist >= UNDETECTED_DISTANCE) break;
   }
 
+  assertNotAborted(signal);
   return { data: best, size: FIELD };
 }

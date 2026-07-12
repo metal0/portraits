@@ -102,6 +102,7 @@ export function ExportBar() {
         <Modal title="Export" onClose={() => setOpen(false)}>
           <Section icon="grid" title="Output resolution">
             <Segmented<string>
+              label="Output resolution"
               value={String(grid.outputSizePx)}
               onChange={(v) => setGrid({ outputSizePx: Number(v) })}
               options={OUTPUT_SIZES.map((s) => ({ value: String(s), label: `${s}` }))}

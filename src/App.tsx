@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useImageLoader } from "@/hooks/useImageLoader";
+import { useFaceModelPreload } from "@/hooks/useFaceModelPreload";
 import { useRenderEngine } from "@/hooks/useRenderEngine";
 import { useStore } from "@/state/store";
 import { Uploader } from "@/components/Uploader";
@@ -11,26 +12,33 @@ import { ColorControls } from "@/components/ColorControls";
 import { PrivacyControls } from "@/components/PrivacyControls";
 import { ExportBar } from "@/components/ExportBar";
 import { PreviewStage } from "@/components/PreviewStage";
+import { PwaUpdatePrompt } from "@/components/PwaUpdatePrompt";
 import { Icon } from "@/components/ui/Icon";
+import { consumePwaUpdateReloadAllowance } from "@/pwa/updateReload";
 import "./App.css";
 
 const REPO_URL = "https://github.com/metal0/portraits";
 
 export default function App() {
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const hasSource = useStore((state) => state.source !== null);
   const { loadFile, error, loading } = useImageLoader();
+  useFaceModelPreload();
   useRenderEngine();
+  const chooseImage = () => imageInputRef.current?.click();
 
   // Warn before an accidental reload/close loses the in-memory image + edits.
   useEffect(() => {
+    if (!hasSource) return;
+
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (useStore.getState().source) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
+      if (consumePwaUpdateReloadAllowance()) return;
+      e.preventDefault();
+      e.returnValue = "";
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  }, [hasSource]);
 
   return (
     <div className="app">
@@ -55,7 +63,11 @@ export default function App() {
 
       <div className="app__body">
         <aside className="panel panel--left">
-          <Uploader onFile={loadFile} error={error} loading={loading} />
+          <Uploader
+            error={error}
+            loading={loading}
+            onChooseFile={chooseImage}
+          />
           <AdjustControls />
           <ColorControls />
           <DisplayControls />
@@ -64,10 +76,22 @@ export default function App() {
           <ExportBar />
         </aside>
 
-        <PreviewStage onFile={loadFile} />
+        <PreviewStage onFile={loadFile} onChooseFile={chooseImage} />
       </div>
 
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/avif"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void loadFile(file);
+          event.target.value = "";
+        }}
+      />
       <CropModal />
+      <PwaUpdatePrompt />
     </div>
   );
 }

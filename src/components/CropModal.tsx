@@ -1,10 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useStore } from "@/state/store";
 import type { Crop } from "@/core/types";
 import { clamp } from "@/core/grid";
 import { autoFrame } from "@/core/saliency";
 import { Icon } from "./ui/Icon";
+import { Modal } from "./ui/Modal";
 
 /** Crop square in source-pixel space. */
 interface Box {
@@ -76,7 +76,7 @@ function CropEditor(props: {
   // Fit the image into the available modal space; recompute on resize.
   useLayoutEffect(() => {
     const measure = () => {
-      const maxW = Math.min(520, window.innerWidth - 48);
+      const maxW = Math.max(240, Math.min(520, window.innerWidth - 80));
       const maxH = Math.min(window.innerHeight * 0.55, 460);
       const k = Math.min(maxW / w, maxH / h);
       setFit({ k, dw: Math.round(w * k), dh: Math.round(h * k) });
@@ -108,7 +108,7 @@ function CropEditor(props: {
     };
   };
 
-  const onPointerDown = (handle: Handle) => (e: React.PointerEvent) => {
+  const startDrag = (handle: Handle, e: React.PointerEvent) => {
     e.preventDefault();
     // Handles live inside the draggable box; stop the event so a handle press
     // starts a resize instead of bubbling up to the box's "move" handler.
@@ -153,6 +153,28 @@ function CropEditor(props: {
     }));
   };
 
+  const nudgeCrop = (dx: number, dy: number) => {
+    setBox((current) => ({
+      ...current,
+      cx: clamp(current.cx + dx, current.s / 2, w - current.s / 2),
+      cy: clamp(current.cy + dy, current.s / 2, h - current.s / 2),
+    }));
+  };
+
+  const onCropKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const step = Math.max(1, box.s * (event.shiftKey ? 0.05 : 0.01));
+    const movement: Record<string, [number, number]> = {
+      ArrowLeft: [-step, 0],
+      ArrowRight: [step, 0],
+      ArrowUp: [0, -step],
+      ArrowDown: [0, step],
+    };
+    const delta = movement[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    nudgeCrop(delta[0], delta[1]);
+  };
+
   const autoFit = () => setBox(autoFrame(source));
 
   const apply = () =>
@@ -161,70 +183,74 @@ function CropEditor(props: {
   const disp = { left: (box.cx - box.s / 2) * fit.k, top: (box.cy - box.s / 2) * fit.k, size: box.s * fit.k };
   const zoom = minDim / box.s;
 
-  return createPortal(
-    <div className="modal" onMouseDown={props.onCancel}>
-      <div className="modal__dialog crop" role="dialog" aria-modal="true" aria-label="Crop image" onMouseDown={(e) => e.stopPropagation()}>
-        <div className="modal__head">
-          <h2 className="modal__title">Crop</h2>
-          <button type="button" className="icon-btn" title="Cancel" onClick={props.onCancel}>
-            <Icon name="x" size={14} />
-          </button>
-        </div>
-
-        <div className="crop__stage" ref={stageRef} style={{ width: fit.dw, height: fit.dh }}>
-          <canvas ref={canvasRef} className="crop__img" />
-          <div
-            className="crop__box"
-            style={{ left: disp.left, top: disp.top, width: disp.size, height: disp.size }}
-            onPointerDown={onPointerDown("move")}
-            onPointerMove={onPointerMove}
-            onPointerUp={endDrag}
-            onPointerCancel={endDrag}
-          >
-            <div className="crop__grid" />
-            {HANDLES.map((hd) => (
-              <span
-                key={hd.id}
-                className={`crop__handle crop__handle--${hd.id}`}
-                style={{ left: `${hd.x * 100}%`, top: `${hd.y * 100}%` }}
-                onPointerDown={onPointerDown(hd.id)}
-                onPointerMove={onPointerMove}
-                onPointerUp={endDrag}
-                onPointerCancel={endDrag}
-              />
-            ))}
-          </div>
-        </div>
-
-        <button type="button" className="btn btn--ghost btn--icon crop__auto" onClick={autoFit}>
-          <Icon name="sparkles" size={14} /> Auto-frame
-        </button>
-
-        <label className="crop__zoom field">
-          <span className="field__label">
-            Zoom <strong>{zoom.toFixed(1)}×</strong>
-          </span>
-          <input
-            type="range"
-            min={1}
-            max={maxZoom}
-            step={0.1}
-            value={Number(zoom.toFixed(1))}
-            onChange={(e) => setZoom(Number(e.target.value))}
-          />
-        </label>
-
-        <div className="modal__actions modal__actions--row">
-          <button type="button" className="btn btn--ghost" onClick={props.onCancel}>
-            Cancel
-          </button>
-          <button type="button" className="btn btn--primary btn--icon" onClick={apply}>
-            <Icon name="check" size={15} /> Apply crop
-          </button>
+  return (
+    <Modal title="Crop image" onClose={props.onCancel} dialogClassName="crop">
+      <div
+        className="crop__stage"
+        ref={stageRef}
+        style={{ width: fit.dw, height: fit.dh }}
+        role="group"
+        aria-label="Source image crop preview"
+      >
+        <canvas ref={canvasRef} className="crop__img" aria-hidden="true" />
+        <div
+          className="crop__box"
+          style={{ left: disp.left, top: disp.top, width: disp.size, height: disp.size }}
+          tabIndex={0}
+          role="group"
+          aria-label="Crop selection. Use arrow keys to reposition it. Hold Shift for larger steps."
+          onPointerDown={(event) => startDrag("move", event)}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onKeyDown={onCropKeyDown}
+        >
+          <div className="crop__grid" />
+          {HANDLES.map((hd) => (
+            <span
+              key={hd.id}
+              className={`crop__handle crop__handle--${hd.id}`}
+              style={{ left: `${hd.x * 100}%`, top: `${hd.y * 100}%` }}
+              onPointerDown={(event) => startDrag(hd.id, event)}
+              onPointerMove={onPointerMove}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+            />
+          ))}
         </div>
       </div>
-    </div>,
-    document.body,
+
+      <p className="modal__note">
+        Drag the selection or focus it and use the arrow keys. Use Zoom to resize the crop.
+      </p>
+
+      <button type="button" className="btn btn--ghost btn--icon crop__auto" onClick={autoFit}>
+        <Icon name="sparkles" size={14} /> Auto-frame
+      </button>
+
+      <label className="crop__zoom field">
+        <span className="field__label">
+          Zoom <strong>{zoom.toFixed(1)}×</strong>
+        </span>
+        <input
+          type="range"
+          min={1}
+          max={maxZoom}
+          step={0.1}
+          value={Number(zoom.toFixed(1))}
+          onChange={(e) => setZoom(Number(e.target.value))}
+        />
+      </label>
+
+      <div className="modal__actions modal__actions--row">
+        <button type="button" className="btn btn--ghost" onClick={props.onCancel}>
+          Cancel
+        </button>
+        <button type="button" className="btn btn--primary btn--icon" onClick={apply}>
+          <Icon name="check" size={15} /> Apply crop
+        </button>
+      </div>
+    </Modal>
   );
 }
 

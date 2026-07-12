@@ -39,13 +39,14 @@ Most tools make an avatar and *hope* it survives being resized. Portraits works 
 ## Features
 
 - 📐 &nbsp;**Size-aware grid.** Tell it where the avatar will live ("64px in Discord") and it picks the right level of chunkiness automatically.
-- 🎨 &nbsp;**Three looks.** Solid square blocks, a dotted "halftone" print style, or a raised 3D relief with soft shading.
+- 🎨 &nbsp;**Five looks.** Solid square blocks, dotted halftone, raised 3D relief, ASCII characters, or a four-color CMYK print screen.
 - 🌗 &nbsp;**Color or black-and-white**, with brightness and contrast controls plus one-click auto-enhance.
 - 🕹️ &nbsp;**Retro palettes.** 1-bit, grayscale, Game Boy, and Minecraft, or bring your own colors. (Uses Floyd–Steinberg dithering to fake more colors than you actually have.)
 - ✂️ &nbsp;**Framing.** Crop to a square or circle, add a round mask, and pick a transparent or solid background.
 - 💾 &nbsp;**Presets.** Save a look you like, name it, and share it with others as a small file.
-- ⬇️ &nbsp;**Real downloads.** Export a PNG at 512, 1024, or 2048 pixels, or a crisp SVG vector (for the square and dot styles).
-- 🛡️ &nbsp;**Privacy tools (optional).** Mask the eyes, subtly warp the face geometry, or optimize an experimental adversarial cloak — and Portraits measures how well face recognition can still match your avatar, entirely on your machine, so you can dial it down. The ~7 MB model loads automatically the first time you turn any of them on.
+- ⬇️ &nbsp;**Real downloads.** Export a PNG at 512, 1024, 2048, or 4096 pixels; a crisp SVG vector for square, dot, and ASCII styles; or a three-size PNG ZIP.
+- 🛡️ &nbsp;**Privacy tools (optional).** Mask the eyes, subtly warp the face geometry, or automatically optimize an experimental adversarial cloak — and Portraits measures how well face recognition can still match your avatar, entirely on your machine, so you can dial it down. The ~7 MB model preloads locally in the background after the page opens.
+- 📲 &nbsp;**Installable and offline-ready.** Install Portraits from your browser; after the first successful load, the editor and bundled face-recognition tools work without a connection.
 
 ---
 
@@ -64,26 +65,34 @@ Say the avatar will be shown at **64px** and you want each block to read as roug
 
 ## 🛠️ Running it locally
 
+Requires Node.js 20 or newer.
+
 ```bash
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # type-check + production build into dist/
 npm run preview    # serve the production build
+npm run generate:pwa-assets # regenerate install icons from public/favicon.svg
 npm run typecheck
+npm run lint
 npm run test:e2e   # Playwright against your local Chrome (no browser download)
+npm run test:pwa   # production build + offline service-worker coverage
 ```
 
 ### Tech
 
 - Vite, React 19, and TypeScript
 - Zustand for state
-- Canvas 2D with Web Workers (OffscreenCanvas) for rendering
+- Canvas 2D for interactive previews, with OffscreenCanvas Web Worker exports
 - Plain CSS with design tokens, no runtime UI dependencies
-- Optional face analysis via [face-api.js](https://github.com/vladmandic/face-api) (MIT), lazy-loaded so the base bundle stays tiny; its ~7 MB of models are served same-origin and never uploaded (the CSP forbids external calls)
+- Workbox-generated service worker and web app manifest via vite-plugin-pwa
+- Optional face analysis via [face-api.js](https://github.com/vladmandic/face-api) (MIT), dynamically imported after initial load so the base bundle stays small; its ~7 MB of models preload from the same origin and are never uploaded (the CSP forbids external calls)
 
 The image engine lives in [`src/core/`](src/core/) as pure, framework-agnostic functions, so it runs on the main thread or inside a worker and stays easy to unit-test on its own.
 
 ### End-to-end tests
+
+[`pwa-e2e/`](pwa-e2e/) runs against the production build, takes Chrome offline after the service worker activates, and verifies that the app shell, lazy JavaScript, manifest, and all local face-model assets remain available.
 
 [`e2e/`](e2e/) drives the app in real Chrome through Playwright's `channel: "chrome"`, so nothing gets downloaded. A dependency-free PNG encoder ([`e2e/fixtures/makeImage.ts`](e2e/fixtures/makeImage.ts)) generates a deterministic test face, and the specs walk the full flow (upload, render, mode switch, grayscale, crop, PNG export) by reading actual canvas pixels.
 

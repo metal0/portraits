@@ -82,7 +82,12 @@ function OriginalCell(props: { size: number; source: ImageBitmap; crop: Crop }) 
 
   return (
     <div className="compare__cell">
-      <canvas ref={ref} style={{ width: props.size, height: props.size }} />
+      <canvas
+        ref={ref}
+        role="img"
+        aria-label={`Original portrait at ${props.size} pixels`}
+        style={{ width: props.size, height: props.size }}
+      />
       <span className="compare__size">{props.size}px</span>
     </div>
   );
@@ -111,7 +116,13 @@ function MosaicCell(props: {
 
   return (
     <div className="compare__cell">
-      <canvas ref={ref} className="preview-mosaic" style={{ width: props.size, height: props.size }} />
+      <canvas
+        ref={ref}
+        role="img"
+        aria-label={`Mosaic portrait at ${props.size} pixels`}
+        className="preview-mosaic"
+        style={{ width: props.size, height: props.size }}
+      />
       <span className="compare__size">{props.size}px</span>
     </div>
   );
