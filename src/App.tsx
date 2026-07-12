@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useImageLoader } from "@/hooks/useImageLoader";
+import { useFaceModelPreload } from "@/hooks/useFaceModelPreload";
 import { useRenderEngine } from "@/hooks/useRenderEngine";
 import { useStore } from "@/state/store";
 import { Uploader } from "@/components/Uploader";
@@ -19,6 +20,7 @@ const REPO_URL = "https://github.com/metal0/portraits";
 export default function App() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const { loadFile, error, loading } = useImageLoader();
+  useFaceModelPreload();
   useRenderEngine();
   const chooseImage = () => imageInputRef.current?.click();
 

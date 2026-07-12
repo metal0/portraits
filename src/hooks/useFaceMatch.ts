@@ -15,7 +15,8 @@ function analysisError(error: unknown): string {
  * When the user engages FR analysis, this: (1) detects the original cropped
  * face once to get a baseline descriptor + landmarks (which also feed the
  * occlusion/warp transforms), and (2) re-measures the settled mosaic against
- * that baseline on each render. Models load lazily on first use.
+ * that baseline on each render. The background preload shares this same
+ * retryable model-loading promise, while these calls guarantee readiness.
  */
 export function useFaceMatch(): void {
   const active = useStore(

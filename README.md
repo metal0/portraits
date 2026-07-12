@@ -45,7 +45,7 @@ Most tools make an avatar and *hope* it survives being resized. Portraits works 
 - ✂️ &nbsp;**Framing.** Crop to a square or circle, add a round mask, and pick a transparent or solid background.
 - 💾 &nbsp;**Presets.** Save a look you like, name it, and share it with others as a small file.
 - ⬇️ &nbsp;**Real downloads.** Export a PNG at 512, 1024, 2048, or 4096 pixels; a crisp SVG vector for square, dot, and ASCII styles; or a three-size PNG ZIP.
-- 🛡️ &nbsp;**Privacy tools (optional).** Mask the eyes, subtly warp the face geometry, or optimize an experimental adversarial cloak — and Portraits measures how well face recognition can still match your avatar, entirely on your machine, so you can dial it down. The ~7 MB model loads automatically the first time you turn any of them on.
+- 🛡️ &nbsp;**Privacy tools (optional).** Mask the eyes, subtly warp the face geometry, or automatically optimize an experimental adversarial cloak — and Portraits measures how well face recognition can still match your avatar, entirely on your machine, so you can dial it down. The ~7 MB model preloads locally in the background after the page opens.
 
 ---
 
@@ -80,7 +80,7 @@ npm run test:e2e   # Playwright against your local Chrome (no browser download)
 - Zustand for state
 - Canvas 2D for interactive previews, with OffscreenCanvas Web Worker exports
 - Plain CSS with design tokens, no runtime UI dependencies
-- Optional face analysis via [face-api.js](https://github.com/vladmandic/face-api) (MIT), lazy-loaded so the base bundle stays tiny; its ~7 MB of models are served same-origin and never uploaded (the CSP forbids external calls)
+- Optional face analysis via [face-api.js](https://github.com/vladmandic/face-api) (MIT), dynamically imported after initial load so the base bundle stays small; its ~7 MB of models preload from the same origin and are never uploaded (the CSP forbids external calls)
 
 The image engine lives in [`src/core/`](src/core/) as pure, framework-agnostic functions, so it runs on the main thread or inside a worker and stays easy to unit-test on its own.
 

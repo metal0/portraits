@@ -56,6 +56,23 @@ async function overrideGrid(page: Page, value: string) {
   await page.getByRole("slider", { name: /^Grid/ }).fill(value);
 }
 
+test("preloads all face-model assets without privacy opt-in", async ({ page }) => {
+  test.setTimeout(60_000);
+  const assets = new Set<string>();
+  page.on("response", (response) => {
+    const pathname = new URL(response.url()).pathname;
+    if (response.ok() && pathname.includes("/models/") && !pathname.endsWith("README.md")) {
+      assets.add(pathname);
+    }
+  });
+
+  // #given the app opens without a source image or privacy interaction
+  await page.goto("/");
+
+  // #then the idle preload successfully fetches every manifest and weight file
+  await expect.poll(() => assets.size, { timeout: 45_000 }).toBe(6);
+});
+
 test("occlusion blacks out the band and auto-shows the match meter", async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto("/");
@@ -82,7 +99,7 @@ test("occlusion blacks out the band and auto-shows the match meter", async ({ pa
   // #then the mosaic gains black cells (fallback band; model load competes for the main thread)
   await expect.poll(blackFraction, { timeout: 15_000 }).toBeGreaterThan(before + 0.03);
 
-  // #and the match meter auto-loads the model and settles on a verdict
+  // #and the match meter reuses the preloaded model and settles on a verdict
   await expect
     .poll(() => frVerdict(page), { timeout: 45_000 })
     .toMatch(/Likely matches you|Borderline|Unlikely to match|No face detected/);
@@ -102,14 +119,18 @@ test("cloak optimization raises the descriptor distance on a fine render", async
   await page.getByRole("button", { name: "Privacy", exact: true }).click();
   await overrideGrid(page, "128");
 
-  // Enabling the cloak engages the model but changes nothing until optimized.
+  // Enabling the cloak first measures the uncloaked render.
   await page.getByText("Adversarial cloak (experimental)").click();
+  await expect(page.getByText("Optimizing the cloak automatically…")).toBeVisible({
+    timeout: 60_000,
+  });
   await expect.poll(() => frVerdict(page), { timeout: 60_000 }).toMatch(/Likely matches you|Borderline/);
   const before = await frScore(page);
 
-  // #when the cloak is optimized against the local model
-  await page.getByRole("button", { name: /Optimize cloak/ }).click();
-  await expect(page.getByRole("button", { name: /Re-optimize cloak/ })).toBeVisible({ timeout: 60_000 });
+  // #when the settled render is optimized automatically against the local model
+  await expect(page.getByText(/Cloak optimized and applied automatically/)).toBeVisible({
+    timeout: 60_000,
+  });
 
   // #then it measurably worsens the match (higher distance, or undetectable) once
   // the debounced re-render + re-measure lands
@@ -129,8 +150,15 @@ test("cloak optimization raises the descriptor distance on a fine render", async
   await page.getByRole("button", { name: "Adjust", exact: true }).click();
   await page.getByRole("slider", { name: /^Brightness/ }).fill("10");
 
-  // #then the image-specific cloak field is invalidated
-  await expect(page.getByRole("button", { name: "Optimize cloak", exact: true })).toBeVisible();
+  // #then the image-specific field is regenerated automatically for the new render
+  await expect(
+    page.getByText(
+      "Automatic optimization starts after the latest render and face measurement settle.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText(/Cloak optimized and applied automatically/)).toBeVisible({
+    timeout: 60_000,
+  });
 
   expect(errors.filter((e) => /Content Security Policy|CSP/i.test(e))).toEqual([]);
   expect(errors.filter((e) => /pageerror/.test(e))).toEqual([]);
@@ -162,19 +190,25 @@ test("same-sized replacement invalidates in-flight face analysis", async ({ page
 
 test("failed model loading can be retried", async ({ page }) => {
   test.setTimeout(90_000);
-  let failModelLoad = true;
+  let failuresRemaining = 2;
   await page.route("**/models/tiny_face_detector_model-weights_manifest.json", async (route) => {
-    if (failModelLoad) {
-      failModelLoad = false;
+    if (failuresRemaining > 0) {
+      failuresRemaining -= 1;
       await route.fulfill({ status: 503, contentType: "application/json", body: "{}" });
       return;
     }
     await route.continue();
   });
+  const preloadFailure = page.waitForResponse(
+    (response) =>
+      response.url().includes("tiny_face_detector_model-weights_manifest.json") &&
+      response.status() === 503,
+  );
   await page.goto("/");
+  await preloadFailure;
   await upload(page);
 
-  // #given the first same-origin model request fails
+  // #given both the background preload and first on-demand model request fail
   await page.getByRole("button", { name: "Privacy", exact: true }).click();
   await page.getByText("Hide feature band").click();
   const retry = page.getByRole("button", { name: "Retry face analysis" });
@@ -246,7 +280,7 @@ test("returning to a previous crop while privacy is off restarts analysis", asyn
     .toMatch(/Likely matches you|Borderline|Unlikely to match|No face detected/);
 });
 
-test("stale cloak optimization cannot install a field", async ({ page }) => {
+test("settings changed during optimization apply only the latest automatic cloak", async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto("/");
   await upload(page);
@@ -254,20 +288,26 @@ test("stale cloak optimization cannot install a field", async ({ page }) => {
   await overrideGrid(page, "128");
   const cloakToggle = page.getByText("Adversarial cloak (experimental)");
   await cloakToggle.click();
-  const optimize = page.getByRole("button", { name: "Optimize cloak", exact: true });
-  await expect(optimize).toBeEnabled({ timeout: 60_000 });
 
-  // #given a cloak optimization is in flight
-  await optimize.click();
-  await expect(page.getByRole("button", { name: "Optimizing…" })).toBeDisabled();
-
-  // #when its captured cloak state changes before the optimizer resolves
-  await cloakToggle.click();
-  await cloakToggle.click();
-
-  // #then the stale field is discarded instead of being installed or re-enabling stale state
-  await expect(page.getByRole("button", { name: "Optimize cloak", exact: true })).toBeEnabled({
+  // #given automatic cloak optimization is in flight
+  await expect(page.getByText("Optimizing the cloak automatically…")).toBeVisible({
     timeout: 60_000,
   });
-  await expect(page.getByRole("button", { name: "Re-optimize cloak" })).toHaveCount(0);
+
+  // #when multiple settings change before that optimizer resolves
+  const budget = page.getByRole("slider", { name: /^Cloak budget/ });
+  await budget.fill("60");
+  await budget.fill("70");
+  await budget.fill("80");
+
+  // #then obsolete work is discarded and the latest settled render is optimized automatically
+  await expect(
+    page.getByText(
+      "Automatic optimization starts after the latest render and face measurement settle.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText(/Cloak optimized and applied automatically/)).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByRole("button", { name: /^(Re-)?Optimize cloak$/ })).toHaveCount(0);
 });

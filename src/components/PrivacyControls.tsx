@@ -1,96 +1,43 @@
-import { useState, type ReactElement } from "react";
-import { useStore } from "@/state/store";
-import { Section, Segmented, SliderField, Toggle } from "./ui/Controls";
-import { currentRequest } from "@/render/buildRequest";
-import { optimizeCloak } from "@/analysis/cloakOptimize";
+import type { ReactElement } from "react";
 import { isPhotoLike } from "@/core/antifr/cloak";
 import type { OcclusionRegion, OcclusionStyle } from "@/core/types";
+import { useAutoCloak, type AutoCloakStatus } from "@/hooks/useAutoCloak";
+import { useStore } from "@/state/store";
+import { Section, Segmented, SliderField, Toggle } from "./ui/Controls";
+
+function cloakStatusMessage(status: AutoCloakStatus, applying: boolean): string {
+  if (applying) return "Applying the optimized cloak to the latest preview…";
+  if (status === "optimizing") return "Optimizing the cloak automatically…";
+  if (status === "ready") {
+    return "Cloak optimized and applied automatically. Model-specific; treat it as a measured guide.";
+  }
+  if (status === "unavailable") {
+    return "Automatic optimization needs a detected source face. Retry face analysis if it failed.";
+  }
+  return "Automatic optimization starts after the latest render and face measurement settle.";
+}
 
 export function PrivacyControls(): ReactElement | null {
+  const autoCloak = useAutoCloak();
   const source = useStore((s) => s.source);
   const antiFr = useStore((s) => s.antiFr);
   const setAntiFr = useStore((s) => s.setAntiFr);
-  const baseline = useStore((s) => s.baselineEmbedding);
   const gridSize = useStore((s) => s.effectiveGrid());
   const colorMode = useStore((s) => s.color.mode);
   const renderPending = useStore((s) => s.renderPending);
-  const [optimizing, setOptimizing] = useState(false);
-  const [optimizationError, setOptimizationError] = useState<string | null>(null);
 
   if (!source) return null;
 
   const { occlusion, warp, cloak, cloakField, landmarks } = antiFr;
   const cloakActive = isPhotoLike(gridSize, colorMode);
-
-  const runOptimize = async () => {
-    const st = useStore.getState();
-    if (!st.source || !st.baselineEmbedding || st.renderPending) return;
-    const sourceAtStart = st.source;
-    const baselineAtStart = st.baselineEmbedding;
-    const sourceRevisionAtStart = st.sourceRevision;
-    const renderVersionAtStart = st.renderVersion;
-    const requestAtStart = currentRequest();
-    const strengthAtStart = st.antiFr.cloak.strength;
-    const displaySizeAtStart = st.grid.displaySizePx;
-    const outputSizeAtStart = st.grid.outputSizePx;
-
-    const inputsAreCurrent = (): boolean => {
-      const current = useStore.getState();
-      const request = currentRequest();
-      return (
-        current.source === sourceAtStart &&
-        current.sourceRevision === sourceRevisionAtStart &&
-        current.baselineEmbedding === baselineAtStart &&
-        current.renderVersion === renderVersionAtStart &&
-        !current.renderPending &&
-        current.antiFr.cloak.enabled &&
-        current.antiFr.cloak.strength === strengthAtStart &&
-        current.grid.displaySizePx === displaySizeAtStart &&
-        current.grid.outputSizePx === outputSizeAtStart &&
-        request.crop === requestAtStart.crop &&
-        request.gridSize === requestAtStart.gridSize &&
-        request.outputSizePx === requestAtStart.outputSizePx &&
-        request.renderMode === requestAtStart.renderMode &&
-        request.square === requestAtStart.square &&
-        request.dot === requestAtStart.dot &&
-        request.relief === requestAtStart.relief &&
-        request.ascii === requestAtStart.ascii &&
-        request.color === requestAtStart.color &&
-        request.adjust === requestAtStart.adjust &&
-        request.exportSettings === requestAtStart.exportSettings &&
-        request.antiFr === requestAtStart.antiFr
-      );
-    };
-
-    setOptimizationError(null);
-    setOptimizing(true);
-    try {
-      const field = await optimizeCloak(
-        sourceAtStart,
-        baselineAtStart,
-        requestAtStart,
-        strengthAtStart,
-        displaySizeAtStart,
-        outputSizeAtStart,
-      );
-      if (field && inputsAreCurrent()) useStore.getState().setAntiFr({ cloakField: field });
-    } catch (error: unknown) {
-      if (inputsAreCurrent()) {
-        setOptimizationError(
-          error instanceof Error ? error.message : "Cloak optimization failed. Try again.",
-        );
-      }
-    } finally {
-      setOptimizing(false);
-    }
-  };
+  const applyingCloak = autoCloak.status === "ready" && renderPending && cloakField !== null;
 
   return (
     <Section icon="shield" title="Privacy" collapsible defaultCollapsed>
       <p className="field__label">
-        Reduces how well face recognition can match this avatar to you. Turning on any tool loads a
-        ~7&nbsp;MB face model locally (one time, nothing is uploaded) and scores the result above the
-        preview — a guide, not a guarantee against every system.
+        Reduces how well face recognition can match this avatar to you. A ~7&nbsp;MB face model
+        preloads locally in the background after the page opens; nothing is uploaded. Turning on a
+        tool scores the result above the preview — a guide, not a guarantee against every system.
       </p>
 
       <Toggle
@@ -157,7 +104,11 @@ export function PrivacyControls(): ReactElement | null {
         label="Adversarial cloak (experimental)"
         checked={cloak.enabled}
         onChange={(enabled) =>
-          setAntiFr(enabled ? { cloak: { ...cloak, enabled } } : { cloak: { ...cloak, enabled }, cloakField: null })
+          setAntiFr(
+            enabled
+              ? { cloak: { ...cloak, enabled } }
+              : { cloak: { ...cloak, enabled }, cloakField: null },
+          )
         }
       />
       {cloak.enabled &&
@@ -172,25 +123,27 @@ export function PrivacyControls(): ReactElement | null {
               suffix="%"
               onChange={(v) => setAntiFr({ cloak: { ...cloak, strength: v / 100 } })}
             />
-            <button
-              type="button"
-              className="btn btn--primary btn--block"
-              onClick={runOptimize}
-              disabled={optimizing || !baseline || renderPending}
-              aria-busy={optimizing}
-            >
-              {optimizing ? "Optimizing…" : cloakField ? "Re-optimize cloak" : "Optimize cloak"}
-            </button>
-            <p className="field__label" role="status" aria-live="polite">
-              {optimizing
-                ? "Optimizing the cloak locally…"
-                : cloakField
-                ? "Cloak baked in — watch the meter. Model-specific; an arms race like a CAPTCHA."
-                : "Searches for a perturbation that lowers the match score (~10s). Watch the meter."}
-            </p>
-            {optimizationError && (
-              <p className="field__label" role="alert">
-                Cloak optimization failed: {optimizationError}
+            {autoCloak.status === "error" ? (
+              <>
+                <p className="field__label" role="alert">
+                  Automatic cloak optimization failed: {autoCloak.error}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--block"
+                  onClick={autoCloak.retry}
+                >
+                  Retry cloak optimization
+                </button>
+              </>
+            ) : (
+              <p
+                className="field__label"
+                role="status"
+                aria-live="polite"
+                aria-busy={autoCloak.status === "optimizing"}
+              >
+                {cloakStatusMessage(autoCloak.status, applyingCloak)}
               </p>
             )}
           </>

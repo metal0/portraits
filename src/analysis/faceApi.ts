@@ -6,7 +6,7 @@ type Point = { x: number; y: number };
 let apiPromise: Promise<FaceApi> | null = null;
 let modelsPromise: Promise<void> | null = null;
 
-/** Lazily import the (tfjs-bundled) library. tfjs inits its backend on first op. */
+/** Dynamically import the tfjs-bundled library and share initialization across callers. */
 async function getApi(): Promise<FaceApi> {
   if (!apiPromise) {
     apiPromise = import("@vladmandic/face-api").catch((error: unknown) => {
@@ -24,11 +24,13 @@ export function loadFaceModels(): Promise<void> {
       try {
         const faceapi = await getApi();
         const url = import.meta.env.BASE_URL.replace(/\/$/, "") + "/models";
-        await Promise.all([
+        const results = await Promise.allSettled([
           faceapi.nets.tinyFaceDetector.loadFromUri(url),
           faceapi.nets.faceLandmark68Net.loadFromUri(url),
           faceapi.nets.faceRecognitionNet.loadFromUri(url),
         ]);
+        const failure = results.find((result) => result.status === "rejected");
+        if (failure) throw failure.reason;
       } catch (error: unknown) {
         modelsPromise = null;
         throw error;
@@ -36,6 +38,16 @@ export function loadFaceModels(): Promise<void> {
     })();
   }
   return modelsPromise;
+}
+
+/** Best-effort background warmup; an on-demand analysis retries after preload failure. */
+export async function preloadFaceModels(): Promise<boolean> {
+  try {
+    await loadFaceModels();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export interface FaceMeasurement {
