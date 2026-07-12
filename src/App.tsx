@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useImageLoader } from "@/hooks/useImageLoader";
 import { useFaceModelPreload } from "@/hooks/useFaceModelPreload";
+import { useFaceMatch } from "@/hooks/useFaceMatch";
 import { useRenderEngine } from "@/hooks/useRenderEngine";
 import { useStore } from "@/state/store";
 import { Uploader } from "@/components/Uploader";
@@ -25,6 +26,7 @@ export default function App() {
   const { loadFile, error, loading } = useImageLoader();
   useFaceModelPreload();
   useRenderEngine();
+  useFaceMatch();
   const chooseImage = () => imageInputRef.current?.click();
 
   // Warn before an accidental reload/close loses the in-memory image + edits.

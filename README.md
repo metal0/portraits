@@ -26,7 +26,7 @@ Everything runs inside your browser tab. No server, no sign-up, no uploads. Your
 
 🔒 &nbsp;**Nothing leaves your browser.** All the work happens locally, so your original photo is never sent anywhere. Nobody — not us, not any cloud service — ever sees it.
 
-🛡️ &nbsp;**Measure it, don't guess.** Turn on any of the optional Privacy tools and Portraits runs real open-source face-detection and face-recognition models **locally in your browser** — nothing is uploaded — to score how well the mosaic still matches your original. Then it hands you the levers to push that score down: mask the eyes, subtly warp the face geometry, or optimize an adversarial cloak against the model until a recognizer loses you. You watch the number move.
+🛡️ &nbsp;**Measure it, don't guess.** After you load a photo, Portraits automatically runs real open-source face-detection and face-recognition models **locally in your browser** — nothing is uploaded — to score how well the mosaic still matches your original. Then it hands you optional levers to push that score down: mask the eyes, subtly warp the face geometry, or optimize an adversarial cloak against the model until a recognizer loses you. You watch the number move.
 
 **What it can and can't do.** Portraits keeps your real photo off the internet and gives you an avatar that still reads as *you* to people who know you, plus an honest, measured readout of how matchable it is. It is still **not** a guarantee against every face-recognition system: a score is only as good as the model behind it, and the more you degrade the picture the less it looks like you. Portraits gives you the dial and the measurement — where you set it is up to you.
 
@@ -86,7 +86,7 @@ npm run test:pwa   # production build + offline service-worker coverage
 - Canvas 2D for interactive previews, with OffscreenCanvas Web Worker exports
 - Plain CSS with design tokens, no runtime UI dependencies
 - Workbox-generated service worker and web app manifest via vite-plugin-pwa
-- Optional face analysis via [face-api.js](https://github.com/vladmandic/face-api) (MIT), dynamically imported after initial load so the base bundle stays small; its ~7 MB of models preload from the same origin and are never uploaded (the CSP forbids external calls)
+- Automatic local face analysis via [face-api.js](https://github.com/vladmandic/face-api) (MIT), dynamically imported after initial load so the base bundle stays small; its ~7 MB of models preload from the same origin and are never uploaded (the CSP forbids external calls)
 
 The image engine lives in [`src/core/`](src/core/) as pure, framework-agnostic functions, so it runs on the main thread or inside a worker and stays easy to unit-test on its own.
 

@@ -36,8 +36,8 @@ export function PrivacyControls(): ReactElement | null {
     <Section icon="shield" title="Privacy" collapsible defaultCollapsed>
       <p className="field__label">
         Reduces how well face recognition can match this avatar to you. A ~7&nbsp;MB face model
-        preloads locally in the background after the page opens; nothing is uploaded. Turning on a
-        tool scores the result above the preview — a guide, not a guarantee against every system.
+        preloads locally in the background after the page opens; nothing is uploaded. The result is
+        scored above the preview automatically — a guide, not a guarantee against every system.
       </p>
 
       <Toggle

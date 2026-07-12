@@ -73,7 +73,23 @@ test("preloads all face-model assets without privacy opt-in", async ({ page }) =
   await expect.poll(() => assets.size, { timeout: 45_000 }).toBe(6);
 });
 
-test("occlusion blacks out the band and auto-shows the match meter", async ({ page }) => {
+test("scores the unmodified mosaic before privacy features are enabled", async ({ page }) => {
+  test.setTimeout(60_000);
+
+  // #given every optional privacy transform remains disabled
+  await page.goto("/");
+
+  // #when a source image is applied
+  await upload(page);
+
+  // #then the meter is mounted immediately and reaches a terminal result
+  await expect(page.locator(".meter--fr")).toBeVisible();
+  await expect
+    .poll(() => frVerdict(page), { timeout: 45_000 })
+    .toMatch(/Likely matches you|Borderline|Unlikely to match|No face detected/);
+});
+
+test("occlusion blacks out the band and updates the match meter", async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto("/");
   await upload(page);
@@ -90,6 +106,7 @@ test("occlusion blacks out the band and auto-shows the match meter", async ({ pa
       }
       return black / n;
     });
+  await expect.poll(blackFraction, { timeout: 15_000 }).toBeLessThan(0.95);
   const before = await blackFraction();
 
   // #when the eye band is occluded — no separate opt-in
@@ -119,15 +136,12 @@ test("cloak optimization raises the descriptor distance on a fine render", async
   await page.getByRole("button", { name: "Privacy", exact: true }).click();
   await overrideGrid(page, "128");
 
-  // Enabling the cloak first measures the uncloaked render.
-  await page.getByText("Adversarial cloak (experimental)").click();
-  await expect(page.getByText("Optimizing the cloak automatically…")).toBeVisible({
-    timeout: 60_000,
-  });
+  // #given automatic analysis has measured the uncloaked fine render
   await expect.poll(() => frVerdict(page), { timeout: 60_000 }).toMatch(/Likely matches you|Borderline/);
   const before = await frScore(page);
 
-  // #when the settled render is optimized automatically against the local model
+  // #when the cloak is enabled and optimized automatically against the local model
+  await page.getByText("Adversarial cloak (experimental)").click();
   await expect(page.getByText(/Cloak optimized and applied automatically/)).toBeVisible({
     timeout: 60_000,
   });
@@ -190,31 +204,23 @@ test("same-sized replacement invalidates in-flight face analysis", async ({ page
 
 test("failed model loading can be retried", async ({ page }) => {
   test.setTimeout(90_000);
-  let failuresRemaining = 2;
-  await page.route("**/models/tiny_face_detector_model-weights_manifest.json", async (route) => {
-    if (failuresRemaining > 0) {
-      failuresRemaining -= 1;
+  let failModelRequests = true;
+  await page.route("**/models/*-weights_manifest.json", async (route) => {
+    if (failModelRequests) {
       await route.fulfill({ status: 503, contentType: "application/json", body: "{}" });
       return;
     }
     await route.continue();
   });
-  const preloadFailure = page.waitForResponse(
-    (response) =>
-      response.url().includes("tiny_face_detector_model-weights_manifest.json") &&
-      response.status() === 503,
-  );
   await page.goto("/");
-  await preloadFailure;
   await upload(page);
 
-  // #given both the background preload and first on-demand model request fail
-  await page.getByRole("button", { name: "Privacy", exact: true }).click();
-  await page.getByText("Hide feature band").click();
+  // #given local model requests fail while automatic analysis starts
   const retry = page.getByRole("button", { name: "Retry face analysis" });
   await expect(retry).toBeVisible({ timeout: 45_000 });
 
   // #when the user retries after the transient failure clears
+  failModelRequests = false;
   await retry.click();
 
   // #then the rejected model promise is not reused and analysis reaches a terminal result
@@ -251,36 +257,30 @@ test("returning to a previous crop restarts cancelled baseline analysis", async 
     .toMatch(/Likely matches you|Borderline|Unlikely to match|No face detected/);
 });
 
-test("returning to a previous crop while privacy is off restarts analysis", async ({ page }) => {
+test("returning to a previous crop remeasures with privacy features off", async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto("/");
   await upload(page);
-  await page.getByRole("button", { name: "Privacy", exact: true }).click();
-  const privacyToggle = page.getByText("Hide feature band");
-  await privacyToggle.click();
   await expect
     .poll(() => frVerdict(page), { timeout: 45_000 })
     .toMatch(/Likely matches you|Borderline|Unlikely to match|No face detected/);
 
-  // #given privacy analysis is disabled after crop A has been cached
-  await privacyToggle.click();
-
-  // #when the crop moves away from A and back while analysis remains disabled
+  // #given crop A has been analyzed while every privacy transform remains disabled
+  // #when the crop moves away from A and back before the new analysis settles
   await page.getByRole("button", { name: "Recrop" }).click();
   await page.getByRole("slider", { name: /Zoom/ }).fill("2");
   await page.getByRole("button", { name: "Apply crop" }).click();
   await page.getByRole("button", { name: "Recrop" }).click();
   await page.getByRole("slider", { name: /Zoom/ }).fill("1");
   await page.getByRole("button", { name: "Apply crop" }).click();
-  await privacyToggle.click();
 
-  // #then re-enabling privacy cannot reuse the cleared baseline as a cache hit
+  // #then automatic analysis cannot reuse the cleared baseline as a cache hit
   await expect
     .poll(() => frVerdict(page), { timeout: 45_000 })
     .toMatch(/Likely matches you|Borderline|Unlikely to match|No face detected/);
 });
 
-test("settings changed during optimization apply only the latest automatic cloak", async ({ page }) => {
+test("rapid setting changes apply only the latest automatic cloak", async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto("/");
   await upload(page);
@@ -289,8 +289,9 @@ test("settings changed during optimization apply only the latest automatic cloak
   const cloakToggle = page.getByText("Adversarial cloak (experimental)");
   await cloakToggle.click();
 
-  // #given automatic cloak optimization is in flight
-  await expect(page.getByText("Optimizing the cloak automatically…")).toBeVisible({
+  // #given an automatically optimized cloak has settled
+  const optimized = page.getByText(/Cloak optimized and applied automatically/);
+  await expect(optimized).toBeVisible({
     timeout: 60_000,
   });
 
@@ -300,13 +301,13 @@ test("settings changed during optimization apply only the latest automatic cloak
   await budget.fill("70");
   await budget.fill("80");
 
-  // #then obsolete work is discarded and the latest settled render is optimized automatically
+  // #then the old field is cleared and the latest settled render is optimized automatically
   await expect(
     page.getByText(
       "Automatic optimization starts after the latest render and face measurement settle.",
     ),
   ).toBeVisible();
-  await expect(page.getByText(/Cloak optimized and applied automatically/)).toBeVisible({
+  await expect(optimized).toBeVisible({
     timeout: 60_000,
   });
   await expect(page.getByRole("button", { name: /^(Re-)?Optimize cloak$/ })).toHaveCount(0);

@@ -294,7 +294,10 @@ export const useStore = create<AppState>()(
           changesCloakInput && !carriesCloakField ? { ...antiFr, cloakField: null } : antiFr,
       };
     }),
-  setLandmarks: (landmarks) => set((s) => ({ antiFr: { ...s.antiFr, landmarks } })),
+  setLandmarks: (landmarks) =>
+    set((s) =>
+      s.antiFr.landmarks === landmarks ? s : { antiFr: { ...s.antiFr, landmarks } },
+    ),
   setBaselineEmbedding: (baselineEmbedding) => set({ baselineEmbedding }),
   setMatchResult: (matchResult) => set({ matchResult }),
   setFaceAnalysisStatus: (status, error) =>

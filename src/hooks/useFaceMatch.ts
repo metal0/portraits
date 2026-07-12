@@ -12,16 +12,13 @@ function analysisError(error: unknown): string {
 }
 
 /**
- * When the user engages FR analysis, this: (1) detects the original cropped
- * face once to get a baseline descriptor + landmarks (which also feed the
- * occlusion/warp transforms), and (2) re-measures the settled mosaic against
- * that baseline on each render. The background preload shares this same
- * retryable model-loading promise, while these calls guarantee readiness.
+ * Once a source image exists, this: (1) detects the original cropped face once
+ * to get a baseline descriptor + landmarks (which also feed the occlusion/warp
+ * transforms), and (2) re-measures the settled mosaic against that baseline on
+ * each render. The background preload shares this same retryable model-loading
+ * promise, while these calls guarantee readiness.
  */
 export function useFaceMatch(): void {
-  const active = useStore(
-    (s) => s.antiFr.occlusion.enabled || s.antiFr.warp.enabled || s.antiFr.cloak.enabled,
-  );
   const source = useStore((s) => s.source);
   const sourceRevision = useStore((s) => s.sourceRevision);
   const crop = useStore((s) => s.crop);
@@ -37,7 +34,7 @@ export function useFaceMatch(): void {
 
   useEffect(() => {
     const generation = ++baselineGeneration.current;
-    if (!active || !source) {
+    if (!source) {
       baselineKey.current = "";
       return;
     }
@@ -52,21 +49,18 @@ export function useFaceMatch(): void {
       crop.scale,
       crop.rotation,
     ].join(":");
+    if (baselineKey.current !== key) baselineKey.current = "";
+    if (useStore.getState().renderPending) return;
     if (baselineKey.current === key) return;
-    baselineKey.current = "";
 
     const isCurrent = (): boolean => {
       const current = useStore.getState();
-      const currentActive =
-        current.antiFr.occlusion.enabled ||
-        current.antiFr.warp.enabled ||
-        current.antiFr.cloak.enabled;
       return (
         baselineGeneration.current === generation &&
-        currentActive &&
         current.source === source &&
         current.sourceRevision === sourceRevision &&
         current.crop === crop &&
+        !current.renderPending &&
         current.faceAnalysis.retryVersion === retryVersion
       );
     };
@@ -122,21 +116,16 @@ export function useFaceMatch(): void {
     return () => {
       if (baselineGeneration.current === generation) baselineGeneration.current += 1;
     };
-  }, [active, source, sourceRevision, crop, retryVersion]);
+  }, [source, sourceRevision, crop, renderPending, retryVersion]);
 
   useEffect(() => {
     const generation = ++measurementGeneration.current;
-    if (!active || !source || !baseline || renderPending) return;
+    if (!source || !baseline || renderPending) return;
 
     const isCurrent = (): boolean => {
       const current = useStore.getState();
-      const currentActive =
-        current.antiFr.occlusion.enabled ||
-        current.antiFr.warp.enabled ||
-        current.antiFr.cloak.enabled;
       return (
         measurementGeneration.current === generation &&
-        currentActive &&
         current.source === source &&
         current.sourceRevision === sourceRevision &&
         current.baselineEmbedding === baseline &&
@@ -186,7 +175,6 @@ export function useFaceMatch(): void {
       if (measurementGeneration.current === generation) measurementGeneration.current += 1;
     };
   }, [
-    active,
     source,
     sourceRevision,
     baseline,

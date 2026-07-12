@@ -25,9 +25,15 @@ export function loadFaceModels(): Promise<void> {
         const faceapi = await getApi();
         const url = import.meta.env.BASE_URL.replace(/\/$/, "") + "/models";
         const results = await Promise.allSettled([
-          faceapi.nets.tinyFaceDetector.loadFromUri(url),
-          faceapi.nets.faceLandmark68Net.loadFromUri(url),
-          faceapi.nets.faceRecognitionNet.loadFromUri(url),
+          faceapi.nets.tinyFaceDetector.isLoaded
+            ? Promise.resolve()
+            : faceapi.nets.tinyFaceDetector.loadFromUri(url),
+          faceapi.nets.faceLandmark68Net.isLoaded
+            ? Promise.resolve()
+            : faceapi.nets.faceLandmark68Net.loadFromUri(url),
+          faceapi.nets.faceRecognitionNet.isLoaded
+            ? Promise.resolve()
+            : faceapi.nets.faceRecognitionNet.loadFromUri(url),
         ]);
         const failure = results.find((result) => result.status === "rejected");
         if (failure) throw failure.reason;

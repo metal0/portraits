@@ -1,6 +1,5 @@
 import type { ReactElement } from "react";
 import { SAME_PERSON_DISTANCE } from "@/analysis/faceApi";
-import { useFaceMatch } from "@/hooks/useFaceMatch";
 import { useStore } from "@/state/store";
 
 function verdict(distance: number, detected: boolean): { slug: string; label: string } {
@@ -11,17 +10,13 @@ function verdict(distance: number, detected: boolean): { slug: string; label: st
 }
 
 export function AntiFrMeter(): ReactElement | null {
-  useFaceMatch();
-  const active = useStore(
-    (s) => s.antiFr.occlusion.enabled || s.antiFr.warp.enabled || s.antiFr.cloak.enabled,
-  );
   const source = useStore((s) => s.source);
   const baseline = useStore((s) => s.baselineEmbedding);
   const result = useStore((s) => s.matchResult);
   const analysis = useStore((s) => s.faceAnalysis);
   const retryFaceAnalysis = useStore((s) => s.retryFaceAnalysis);
 
-  if (!source || !active) return null;
+  if (!source) return null;
 
   if (analysis.status === "error") {
     return (
