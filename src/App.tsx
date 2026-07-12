@@ -12,13 +12,16 @@ import { ColorControls } from "@/components/ColorControls";
 import { PrivacyControls } from "@/components/PrivacyControls";
 import { ExportBar } from "@/components/ExportBar";
 import { PreviewStage } from "@/components/PreviewStage";
+import { PwaUpdatePrompt } from "@/components/PwaUpdatePrompt";
 import { Icon } from "@/components/ui/Icon";
+import { consumePwaUpdateReloadAllowance } from "@/pwa/updateReload";
 import "./App.css";
 
 const REPO_URL = "https://github.com/metal0/portraits";
 
 export default function App() {
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const hasSource = useStore((state) => state.source !== null);
   const { loadFile, error, loading } = useImageLoader();
   useFaceModelPreload();
   useRenderEngine();
@@ -26,15 +29,16 @@ export default function App() {
 
   // Warn before an accidental reload/close loses the in-memory image + edits.
   useEffect(() => {
+    if (!hasSource) return;
+
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (useStore.getState().source) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
+      if (consumePwaUpdateReloadAllowance()) return;
+      e.preventDefault();
+      e.returnValue = "";
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  }, [hasSource]);
 
   return (
     <div className="app">
@@ -87,6 +91,7 @@ export default function App() {
         }}
       />
       <CropModal />
+      <PwaUpdatePrompt />
     </div>
   );
 }

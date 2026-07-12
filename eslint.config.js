@@ -27,13 +27,13 @@ export default defineConfig([
   },
   reactRefresh.configs.vite(),
   {
-    files: ["*.config.ts", "e2e/**/*.ts"],
+    files: ["*.config.ts", "e2e/**/*.ts", "pwa-e2e/**/*.ts"],
     languageOptions: {
       globals: globals.nodeBuiltin,
     },
   },
   {
-    files: ["e2e/**/*.ts"],
+    files: ["e2e/**/*.ts", "pwa-e2e/**/*.ts"],
     languageOptions: {
       globals: globals.browser,
     },
