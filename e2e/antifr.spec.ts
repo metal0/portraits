@@ -56,6 +56,31 @@ async function overrideGrid(page: Page, value: string) {
   await page.getByRole("slider", { name: /^Grid/ }).fill(value);
 }
 
+async function disableWebGl(page: Page) {
+  await page.addInitScript(() => {
+    const blockedContexts = new Set(["webgl", "webgl2", "experimental-webgl"]);
+    const htmlGetContext = HTMLCanvasElement.prototype.getContext;
+    Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+      configurable: true,
+      value(this: HTMLCanvasElement, contextId: string, ...args: unknown[]) {
+        if (blockedContexts.has(contextId.toLowerCase())) return null;
+        return Reflect.apply(htmlGetContext, this, [contextId, ...args]);
+      },
+    });
+
+    if (typeof OffscreenCanvas !== "undefined") {
+      const offscreenGetContext = OffscreenCanvas.prototype.getContext;
+      Object.defineProperty(OffscreenCanvas.prototype, "getContext", {
+        configurable: true,
+        value(this: OffscreenCanvas, contextId: string, ...args: unknown[]) {
+          if (blockedContexts.has(contextId.toLowerCase())) return null;
+          return Reflect.apply(offscreenGetContext, this, [contextId, ...args]);
+        },
+      });
+    }
+  });
+}
+
 test("preloads all face-model assets without privacy opt-in", async ({ page }) => {
   test.setTimeout(60_000);
   const assets = new Set<string>();
@@ -71,6 +96,31 @@ test("preloads all face-model assets without privacy opt-in", async ({ page }) =
 
   // #then the idle preload successfully fetches every manifest and weight file
   await expect.poll(() => assets.size, { timeout: 45_000 }).toBe(6);
+});
+
+test("uses the bundled WASM backend when WebGL is unavailable", async ({ page }) => {
+  test.setTimeout(90_000);
+
+  // #given WebGL is unavailable before the face library initializes
+  await disableWebGl(page);
+  const wasmResponsePromise = page.waitForResponse((response) => {
+    const contentType = response.headers()["content-type"] ?? "";
+    return (
+      new URL(response.url()).pathname.endsWith(".wasm") &&
+      contentType.includes("application/wasm")
+    );
+  });
+
+  // #when analysis initializes a compute backend
+  await page.goto("/");
+  await upload(page);
+  const wasmResponse = await wasmResponsePromise;
+
+  // #then TensorFlow loads a real WASM binary and reaches an analysis verdict
+  expect(wasmResponse.ok()).toBe(true);
+  await expect
+    .poll(() => frVerdict(page), { timeout: 45_000 })
+    .toMatch(/Likely matches you|Borderline|Unlikely to match|No face detected/);
 });
 
 test("scores the unmodified mosaic before privacy features are enabled", async ({ page }) => {

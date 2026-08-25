@@ -1,18 +1,62 @@
+import wasmSimdUrl from "@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm-simd.wasm?url";
+import wasmThreadedSimdUrl from "@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm-threaded-simd.wasm?url";
+import wasmUrl from "@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm.wasm?url";
+
 import type { FaceLandmarks, FacePoint } from "@/core/types";
 
 type FaceApi = typeof import("@vladmandic/face-api");
 type Point = { x: number; y: number };
+type WasmBinaryName =
+  | "tfjs-backend-wasm.wasm"
+  | "tfjs-backend-wasm-simd.wasm"
+  | "tfjs-backend-wasm-threaded-simd.wasm";
+
+interface WasmPathConfigurable {
+  ready(): Promise<void>;
+  setWasmPaths(paths: Record<WasmBinaryName, string>): void;
+}
+
+const WASM_PATHS = {
+  "tfjs-backend-wasm.wasm": wasmUrl,
+  "tfjs-backend-wasm-simd.wasm": wasmSimdUrl,
+  "tfjs-backend-wasm-threaded-simd.wasm": wasmThreadedSimdUrl,
+} satisfies Record<WasmBinaryName, string>;
 
 let apiPromise: Promise<FaceApi> | null = null;
 let modelsPromise: Promise<void> | null = null;
 
+function hasWasmPathSetter(value: unknown): value is WasmPathConfigurable {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "ready" in value &&
+    "setWasmPaths" in value &&
+    typeof value.ready === "function" &&
+    typeof value.setWasmPaths === "function"
+  );
+}
+
+async function configureTensorFlowRuntime(faceapi: FaceApi): Promise<void> {
+  const runtime: unknown = faceapi.tf;
+  if (!hasWasmPathSetter(runtime)) {
+    throw new Error("Face API does not expose TensorFlow WASM configuration");
+  }
+  runtime.setWasmPaths(WASM_PATHS);
+  await runtime.ready();
+}
+
 /** Dynamically import the tfjs-bundled library and share initialization across callers. */
 async function getApi(): Promise<FaceApi> {
   if (!apiPromise) {
-    apiPromise = import("@vladmandic/face-api").catch((error: unknown) => {
-      apiPromise = null;
-      throw error;
-    });
+    apiPromise = import("@vladmandic/face-api")
+      .then(async (faceapi) => {
+        await configureTensorFlowRuntime(faceapi);
+        return faceapi;
+      })
+      .catch((error: unknown) => {
+        apiPromise = null;
+        throw error;
+      });
   }
   return apiPromise;
 }

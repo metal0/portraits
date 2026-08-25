@@ -19,6 +19,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@tensorflow/tfjs-backend-wasm": "4.22.0",
     "@vladmandic/face-api": "^1.7.15",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

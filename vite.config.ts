@@ -52,7 +52,7 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        globPatterns: ["**/*.{js,css,html,json,bin}"],
+        globPatterns: ["**/*.{js,css,html,json,bin,wasm}"],
         maximumFileSizeToCacheInBytes: MAX_PRECACHE_FILE_BYTES,
         navigateFallback: "index.html",
       },

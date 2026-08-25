@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const MODEL_ASSET_COUNT = 6;
+const WASM_ASSET_COUNT = 3;
 const INSTALL_ICON_PATHS = [
   "/pwa-192x192.png",
   "/pwa-512x512.png",
@@ -95,6 +96,20 @@ test("loads the editor and face-recognition assets without a connection", async 
             [...modelResponses.values()].every(Boolean),
           scriptsReady:
             scriptResponses.size >= 2 && [...scriptResponses.values()].every(Boolean),
+          wasmAssetsReady:
+            (await page.evaluate(async () => {
+              const cacheNames = await caches.keys();
+              const cachedRequests = (
+                await Promise.all(
+                  cacheNames.map(async (cacheName) => (await caches.open(cacheName)).keys()),
+                )
+              ).flat();
+              return new Set(
+                cachedRequests
+                  .map((request) => new URL(request.url).pathname)
+                  .filter((pathname) => pathname.endsWith(".wasm")),
+              ).size;
+            })) === WASM_ASSET_COUNT,
         };
       },
       { timeout: 60_000 },
@@ -118,5 +133,6 @@ test("loads the editor and face-recognition assets without a connection", async 
       },
       modelsReady: true,
       scriptsReady: true,
+      wasmAssetsReady: true,
     });
 });
